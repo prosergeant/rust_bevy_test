@@ -1,4 +1,7 @@
-use crate::{core::resources::GameAssets, states::game_state::GameState};
+use crate::{
+    core::{resources::GameAssets, systems::despawn_entities},
+    states::game_state::GameState,
+};
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -16,7 +19,8 @@ impl Plugin for BirdPlugin {
             .add_systems(
                 Update,
                 (bird_movement, bird_jump).run_if(in_state(GameState::Playing)),
-            );
+            )
+            .add_systems(OnExit(GameState::Playing), despawn_bird);
     }
 }
 
@@ -36,19 +40,23 @@ fn spawn_bird(mut commands: Commands, assets: Res<GameAssets>) {
 fn bird_jump(mut query: Query<&mut Bird>, keys: Res<ButtonInput<KeyCode>>) {
     if keys.just_pressed(KeyCode::Space) {
         for mut bird in &mut query {
-            bird.velocity = 5.0;
+            bird.velocity = 500.0;
         }
     }
 }
 
 fn bird_movement(time: Res<Time>, mut query: Query<(&mut Bird, &mut Transform)>) {
     for (mut bird, mut transform) in &mut query {
-        bird.velocity -= 15.0 * time.delta_secs();
-        transform.translation.y += bird.velocity * time.delta_secs() * 100.0;
+        bird.velocity -= 2000.0 * time.delta_secs();
+        transform.translation.y += bird.velocity * time.delta_secs(); // * 100.0;
 
         transform.rotation = Quat::from_axis_angle(
             Vec3::Z,
             f32::clamp(bird.velocity / VELOCITY_TO_ROTATION_RATIO, -90., 90.).to_radians(),
         );
     }
+}
+
+fn despawn_bird(mut commands: Commands, query: Query<Entity, With<Bird>>) {
+    despawn_entities::<Bird>(commands, query);
 }
