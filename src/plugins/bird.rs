@@ -57,6 +57,6 @@ fn bird_movement(time: Res<Time>, mut query: Query<(&mut Bird, &mut Transform)>)
     }
 }
 
-fn despawn_bird(mut commands: Commands, query: Query<Entity, With<Bird>>) {
+fn despawn_bird(commands: Commands, query: Query<Entity, With<Bird>>) {
     despawn_entities::<Bird>(commands, query);
 }

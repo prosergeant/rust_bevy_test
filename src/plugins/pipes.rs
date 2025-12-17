@@ -1,5 +1,8 @@
 use crate::{
-    core::{components::Collider, resources::*, systems::despawn_entities},
+    core::{components::{
+        Collider,
+        Scrollable
+    }, resources::*, systems::despawn_entities},
     plugins::bird::Bird,
     states::game_state::GameState,
 };
@@ -10,9 +13,6 @@ const PIPE_WIDTH: f32 = 80.0;
 
 #[derive(Component)]
 pub struct Pipe;
-
-#[derive(Component)]
-pub struct Scorable;
 
 pub struct PipesPlugin;
 
@@ -68,7 +68,7 @@ fn spawn_pipes(mut commands: Commands, assets: Res<GameAssets>, windows: Query<&
             Collider {
                 size: Vec2::new(PIPE_WIDTH, window_height),
             },
-            Scorable,
+            Scrollable,
         ));
     }
 }
@@ -107,20 +107,20 @@ fn check_collisions(
 fn score_system(
     mut score: ResMut<GameScore>,
     mut commands: Commands,
-    query: Query<(Entity, &Transform), With<Scorable>>,
+    query: Query<(Entity, &Transform), With<Scrollable>>,
     bird_query: Query<&Transform, With<Bird>>,
 ) {
     if let Ok(bird_transform) = bird_query.get_single() {
         for (entity, transform) in &query {
             if transform.translation.x < bird_transform.translation.x - 50.0 {
                 score.0 += 1;
-                commands.entity(entity).remove::<Scorable>();
+                commands.entity(entity).remove::<Scrollable>();
             }
         }
     }
 }
 
-fn despawn_pipes(mut commands: Commands, query: Query<Entity, With<Pipe>>) {
+fn despawn_pipes(commands: Commands, query: Query<Entity, With<Pipe>>) {
     despawn_entities::<Pipe>(commands, query);
 }
 
