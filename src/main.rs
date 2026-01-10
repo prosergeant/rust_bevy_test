@@ -1,6 +1,6 @@
 use crate::core::GamePlugin;
+use crate::states::app_state::AppState;
 use bevy::prelude::*;
-use states::game_state::GameState;
 
 mod core;
 mod plugins;
@@ -16,9 +16,9 @@ fn main() {
                     ..default()
                 }),
                 ..default()
-            })
+            }),
         )
+        .init_state::<AppState>()
         .add_plugins(GamePlugin)
-        .init_state::<GameState>()
         .run();
 }

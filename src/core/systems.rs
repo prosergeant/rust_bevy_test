@@ -8,8 +8,8 @@ pub fn transition_to_game_state(
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         match current_state.get() {
-            GameState::Menu => next_state.set(GameState::Playing),
-            GameState::GameOver => next_state.set(GameState::Menu),
+            GameState::MainMenu => next_state.set(GameState::PreGame),
+            GameState::GameOver => next_state.set(GameState::MainMenu),
             _ => {}
         }
     }

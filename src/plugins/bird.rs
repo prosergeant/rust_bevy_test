@@ -15,12 +15,12 @@ pub struct BirdPlugin;
 
 impl Plugin for BirdPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), spawn_bird)
+        app.add_systems(OnEnter(GameState::PreGame), spawn_bird)
             .add_systems(
                 Update,
                 (bird_movement, bird_jump).run_if(in_state(GameState::Playing)),
             )
-            .add_systems(OnExit(GameState::Playing), despawn_bird);
+            .add_systems(OnExit(GameState::GameOver), despawn_bird);
     }
 }
 
