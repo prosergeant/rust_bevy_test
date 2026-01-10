@@ -38,8 +38,12 @@ fn spawn_bird(mut commands: Commands, assets: Res<GameAssets>) {
     ));
 }
 
-fn bird_jump(mut query: Query<&mut Bird>, keys: Res<ButtonInput<KeyCode>>) {
-    if keys.just_pressed(KeyCode::Space) {
+fn bird_jump(
+    mut query: Query<&mut Bird>,
+    keys: Res<ButtonInput<KeyCode>>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+) {
+    if keys.just_pressed(KeyCode::Space) || mouse_buttons.just_pressed(MouseButton::Left) {
         for mut bird in &mut query {
             bird.velocity = 500.0;
         }
