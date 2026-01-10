@@ -11,9 +11,9 @@ use bevy::prelude::*;
 
 const PIPE_GAP: f32 = 300.0;
 const PIPE_WIDTH: f32 = 80.0;
-const PIPE_SPAWN_INTERVAL: f32 = 2.0;
-const PIPE_DISTANCE: f32 = 400.0;
-const OFFSCREEN_THRESHOLD: f32 = -200.0;
+const PIPE_SPAWN_INTERVAL: f32 = 2.0;    // Интервал спавна труб
+const PIPE_DISTANCE: f32 = 400.0;        // Расстояние между трубами
+const OFFSCREEN_THRESHOLD: f32 = -400.0; // Порог удаления труб
 
 #[derive(Component)]
 pub struct Pipe;
