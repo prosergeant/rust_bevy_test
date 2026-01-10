@@ -141,7 +141,7 @@ fn spawn_main_menu(mut commands: Commands, asset: Res<GameAssets>) {
                 },
                 TextColor(Color::WHITE),
                 Node {
-                    margin: UiRect::bottom(Val::Px(0.0)),
+                    margin: UiRect::bottom(Val::Px(40.0)),
                     ..default()
                 },
             ));
