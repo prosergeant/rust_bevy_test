@@ -9,7 +9,7 @@ use crate::states::app_state::AppState; // Added AppState import
 use crate::states::game_state::GameState;
 use bevy::prelude::*;
 use bevy::text::{TextFont, TextColor};
-use bevy::ui::{Node, PositionType, Val};
+use bevy::ui::{Node, Val, FlexDirection, AlignItems, JustifyContent};
 
 pub struct GamePlugin;
 
@@ -19,25 +19,38 @@ pub struct OnMainMenuScreen;
 #[derive(Component)]
 pub struct OnGameOverScreen;
 
+#[derive(Component)]
+pub struct StateDisplayText;
+
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GameScore>()
-            .init_state::<GameState>() // Initialize GameState here
+            .init_state::<GameState>()
             .add_plugins((AssetLoaderPlugin, BirdPlugin, PipesPlugin))
-            .add_systems(Startup, setup)
-            .add_systems(OnEnter(AppState::Loaded), init_game_state) // Initialize GameState when AppState is Loaded
+            .add_systems(Startup, (setup,spawn_state_ui))
+            .add_systems(OnEnter(AppState::Loaded), init_game_state)
+            .add_systems(OnEnter(GameState::PreGame), reset_score)
             .add_systems(
                 Update,
                 (
                     transition_to_game_state,
                     pregame_to_playing.run_if(in_state(GameState::PreGame)),
                 )
-                    .run_if(in_state(AppState::Loaded)), // Only run game logic when AppState is Loaded
+                    .run_if(in_state(AppState::Loaded)),
             )
+            .add_systems(
+                Update, 
+                update_state_display.run_if(
+                    state_changed::<AppState>
+                        .or(state_changed::<GameState>)
+                )
+            )
+            
             .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu.run_if(in_state(AppState::Loaded)))
-            .add_systems(OnExit(GameState::MainMenu), despawn_entities::<OnMainMenuScreen>.run_if(in_state(AppState::Loaded)))
-            .add_systems(OnEnter(GameState::GameOver), spawn_game_over_screen.run_if(in_state(AppState::Loaded)))
-            .add_systems(OnExit(GameState::GameOver), despawn_entities::<OnGameOverScreen>.run_if(in_state(AppState::Loaded)));
+            .add_systems(OnEnter(AppState::Loaded), spawn_main_menu.run_if(in_state(GameState::MainMenu)))
+            .add_systems(OnExit(GameState::MainMenu), despawn_entities::<OnMainMenuScreen>)
+            .add_systems(OnEnter(GameState::GameOver), spawn_game_over_screen)
+            .add_systems(OnExit(GameState::GameOver), despawn_entities::<OnGameOverScreen>);
     }
 }
 
@@ -49,112 +62,132 @@ fn setup(mut commands: Commands) {
     commands.spawn(Camera2d::default());
 }
 
+fn reset_score(mut score: ResMut<GameScore>) {
+    score.0 = 0;
+}
+
 fn pregame_to_playing(mut next_state: ResMut<NextState<GameState>>) {
     next_state.set(GameState::Playing);
 }
 
+fn spawn_state_ui(mut commands: Commands, asset: Res<GameAssets>) {
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(20.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("app state: Loading"), // начальный текст
+                TextFont {
+                    font: asset.font.clone(),
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                StateDisplayText, // маркер для поиска
+            ));
+        });
+}
+fn update_state_display(
+    mut query: Query<&mut Text, With<StateDisplayText>>,
+    app_state: Res<State<AppState>>,
+    game_state: Res<State<GameState>>,
+) {
+    for mut text in &mut query {
+        **text = format!("app: {:?} | game: {:?}", app_state.get(), game_state.get());
+    }
+}
+
 fn spawn_main_menu(mut commands: Commands, asset: Res<GameAssets>) {
-    commands.spawn((
-        // Сам текст
-        Text::new("Flappy Bird"),
-        // Настройки шрифта
-        TextFont {
-            font: asset.font.clone(),
-            font_size: 80.0,
-            ..default()
-        },
-        // Цвет текста
-        TextColor(Color::WHITE),
-        // Позиционирование в UI (например, в центре)
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Percent(30.0),
-            left: Val::Percent(50.0),
-            ..default()
-        },
-        OnMainMenuScreen,
-    ));
-    commands.spawn((
-        // Сам текст
-        Text::new("Press Space to Start"),
-        // Настройки шрифта
-        TextFont {
-            font: asset.font.clone(),
-            font_size: 40.0,
-            ..default()
-        },
-        // Цвет текста
-        TextColor(Color::WHITE),
-        // Позиционирование в UI (например, в центре)
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Percent(60.0),
-            left: Val::Percent(50.0),
-            ..default()
-        },
-        OnMainMenuScreen,
-    ));
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            OnMainMenuScreen,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("Flappy Bird"),
+                TextFont {
+                    font: asset.font.clone(),
+                    font_size: 80.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+            parent.spawn((
+                Text::new("Press Space to Start"),
+                TextFont {
+                    font: asset.font.clone(),
+                    font_size: 40.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    margin: UiRect::top(Val::Px(20.0)),
+                    ..default()
+                },
+            ));
+        });
 }
 
 fn spawn_game_over_screen(mut commands: Commands, score: Res<GameScore>, asset: Res<GameAssets>) {
-    commands.spawn((
-        // Сам текст
-        Text::new("Game Over"),
-        // Настройки шрифта
-        TextFont {
-            font: asset.font.clone(),
-            font_size: 80.0,
-            ..default()
-        },
-        // Цвет текста
-        TextColor(Color::WHITE),
-        // Позиционирование в UI (например, в центре)
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Percent(30.0),
-            left: Val::Percent(50.0),
-            ..default()
-        },
-        OnGameOverScreen,
-    ));
-    commands.spawn((
-        // Сам текст
-        Text::new(format!("Score: {}", score.0)),
-        // Настройки шрифта
-        TextFont {
-            font: asset.font.clone(),
-            font_size: 40.0,
-            ..default()
-        },
-        // Цвет текста
-        TextColor(Color::WHITE),
-        // Позиционирование в UI (например, в центре)
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Percent(50.0),
-            left: Val::Percent(50.0),
-            ..default()
-        },
-        OnGameOverScreen,
-    ));
-    commands.spawn((
-        // Сам текст
-        Text::new("Press Space to Restart"),
-        // Настройки шрифта
-        TextFont {
-            font: asset.font.clone(),
-            font_size: 40.0,
-            ..default()
-        },
-        // Цвет текста
-        TextColor(Color::WHITE),
-        // Позиционирование в UI (например, в центре)
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Percent(70.0),
-            left: Val::Percent(50.0),
-            ..default()
-        },
-        OnGameOverScreen,
-    ));
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            OnGameOverScreen,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("Game Over"),
+                TextFont {
+                    font: asset.font.clone(),
+                    font_size: 80.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+            parent.spawn((
+                Text::new(format!("Score: {}", score.0)),
+                TextFont {
+                    font: asset.font.clone(),
+                    font_size: 40.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                // Node {
+                //     margin: UiRect::vertical(Val::Px(20.0)),
+                //     ..default()
+                // },
+            ));
+            parent.spawn((
+                Text::new("Press Space to Restart"),
+                TextFont {
+                    font: asset.font.clone(),
+                    font_size: 40.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
 }
+

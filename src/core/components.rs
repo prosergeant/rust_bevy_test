@@ -7,6 +7,3 @@ pub struct Collider {
 
 #[derive(Component)]
 pub struct Scrollable;
-
-#[derive(Component)]
-pub struct ScoreText;

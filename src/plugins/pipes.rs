@@ -18,7 +18,8 @@ pub struct PipesPlugin;
 
 impl Plugin for PipesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::PreGame), spawn_pipes)
+        app
+            .add_systems(OnEnter(GameState::PreGame), spawn_pipes)
             .add_systems(
                 Update,
                 (move_pipes, check_collisions, score_system).run_if(in_state(GameState::Playing)),
