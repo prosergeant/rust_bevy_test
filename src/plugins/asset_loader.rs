@@ -6,10 +6,11 @@ pub struct AssetLoaderPlugin;
 
 impl Plugin for AssetLoaderPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Loading), load_assets).add_systems(
-            Update,
-            check_assets_loaded.run_if(in_state(AppState::Loading)),
-        );
+        app.add_systems(OnEnter(AppState::Loading), load_assets)
+            .add_systems(
+                Update,
+                check_assets_loaded.run_if(in_state(AppState::Loading)),
+            );
     }
 }
 
@@ -26,8 +27,12 @@ fn check_assets_loaded(
     asset_server: Res<AssetServer>,
     game_assets: Res<GameAssets>,
 ) {
-    let bird_loaded = asset_server.load_state(game_assets.bird_texture.id()).is_loaded();
-    let pipe_loaded = asset_server.load_state(game_assets.pipe_texture.id()).is_loaded();
+    let bird_loaded = asset_server
+        .load_state(game_assets.bird_texture.id())
+        .is_loaded();
+    let pipe_loaded = asset_server
+        .load_state(game_assets.pipe_texture.id())
+        .is_loaded();
     let font_loaded = asset_server.load_state(game_assets.font.id()).is_loaded();
 
     if bird_loaded && pipe_loaded && font_loaded {

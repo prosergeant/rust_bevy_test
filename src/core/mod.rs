@@ -8,8 +8,8 @@ use crate::plugins::{asset_loader::AssetLoaderPlugin, bird::BirdPlugin, pipes::P
 use crate::states::app_state::AppState; // Added AppState import
 use crate::states::game_state::GameState;
 use bevy::prelude::*;
-use bevy::text::{TextFont, TextColor};
-use bevy::ui::{Node, Val, FlexDirection, AlignItems, JustifyContent};
+use bevy::text::{TextColor, TextFont};
+use bevy::ui::{AlignItems, FlexDirection, JustifyContent, Node, Val};
 
 pub struct GamePlugin;
 
@@ -27,7 +27,7 @@ impl Plugin for GamePlugin {
         app.init_resource::<GameScore>()
             .init_state::<GameState>()
             .add_plugins((AssetLoaderPlugin, BirdPlugin, PipesPlugin))
-            .add_systems(Startup, (setup,spawn_state_ui))
+            .add_systems(Startup, (setup, spawn_state_ui))
             .add_systems(OnEnter(AppState::Loaded), init_game_state)
             .add_systems(OnEnter(GameState::PreGame), reset_score)
             .add_systems(
@@ -39,18 +39,27 @@ impl Plugin for GamePlugin {
                     .run_if(in_state(AppState::Loaded)),
             )
             .add_systems(
-                Update, 
-                update_state_display.run_if(
-                    state_changed::<AppState>
-                        .or(state_changed::<GameState>)
-                )
+                Update,
+                update_state_display
+                    .run_if(state_changed::<AppState>.or(state_changed::<GameState>)),
             )
-            
-            .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu.run_if(in_state(AppState::Loaded)))
-            .add_systems(OnEnter(AppState::Loaded), spawn_main_menu.run_if(in_state(GameState::MainMenu)))
-            .add_systems(OnExit(GameState::MainMenu), despawn_entities::<OnMainMenuScreen>)
+            .add_systems(
+                OnEnter(GameState::MainMenu),
+                spawn_main_menu.run_if(in_state(AppState::Loaded)),
+            )
+            .add_systems(
+                OnEnter(AppState::Loaded),
+                spawn_main_menu.run_if(in_state(GameState::MainMenu)),
+            )
+            .add_systems(
+                OnExit(GameState::MainMenu),
+                despawn_entities::<OnMainMenuScreen>,
+            )
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over_screen)
-            .add_systems(OnExit(GameState::GameOver), despawn_entities::<OnGameOverScreen>);
+            .add_systems(
+                OnExit(GameState::GameOver),
+                despawn_entities::<OnGameOverScreen>,
+            );
     }
 }
 
@@ -72,15 +81,13 @@ fn pregame_to_playing(mut next_state: ResMut<NextState<GameState>>) {
 
 fn spawn_state_ui(mut commands: Commands, asset: Res<GameAssets>) {
     commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(20.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-        ))
+        .spawn((Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(20.0),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            ..default()
+        },))
         .with_children(|parent| {
             parent.spawn((
                 Text::new("app state: Loading"), // начальный текст
@@ -190,4 +197,3 @@ fn spawn_game_over_screen(mut commands: Commands, score: Res<GameScore>, asset: 
             ));
         });
 }
-

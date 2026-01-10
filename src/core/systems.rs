@@ -5,7 +5,7 @@ pub fn transition_to_game_state(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     current_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
-    mut exit: EventWriter<AppExit>
+    mut exit: EventWriter<AppExit>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         match current_state.get() {
@@ -19,8 +19,12 @@ pub fn transition_to_game_state(
         match current_state.get() {
             GameState::Playing => next_state.set(GameState::Paused),
             GameState::Paused => next_state.set(GameState::Playing),
-            GameState::GameOver => {exit.send(AppExit::Success); },
-            GameState::MainMenu => {exit.send(AppExit::Success); },
+            GameState::GameOver => {
+                exit.send(AppExit::Success);
+            }
+            GameState::MainMenu => {
+                exit.send(AppExit::Success);
+            }
             _ => {}
         }
     }

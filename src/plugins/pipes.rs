@@ -37,8 +37,7 @@ pub struct PipesPlugin;
 
 impl Plugin for PipesPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<PipeSpawner>()
+        app.init_resource::<PipeSpawner>()
             .add_systems(OnEnter(GameState::PreGame), spawn_pipes)
             .add_systems(
                 Update,
