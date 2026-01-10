@@ -2,14 +2,17 @@ pub mod components;
 pub mod resources;
 pub mod systems;
 
+use self::components::{ExitButton, MenuButton, StartButton};
 use self::resources::{GameAssets, GameScore};
-use self::systems::{despawn_entities, transition_to_game_state};
+use self::systems::{
+    despawn_entities, handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
+};
 use crate::plugins::{asset_loader::AssetLoaderPlugin, bird::BirdPlugin, pipes::PipesPlugin};
 use crate::states::app_state::AppState; // Added AppState import
 use crate::states::game_state::GameState;
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
-use bevy::ui::{AlignItems, FlexDirection, JustifyContent, Node, Val};
+use bevy::ui::{AlignItems, BorderRadius, FlexDirection, JustifyContent, Node, Overflow, Val};
 
 pub struct GamePlugin;
 
@@ -35,6 +38,10 @@ impl Plugin for GamePlugin {
                 (
                     transition_to_game_state,
                     pregame_to_playing.run_if(in_state(GameState::PreGame)),
+                    handle_menu_button_clicks
+                        .run_if(in_state(GameState::MainMenu).or(in_state(GameState::GameOver))),
+                    menu_button_hover_effect
+                        .run_if(in_state(GameState::MainMenu).or(in_state(GameState::GameOver))),
                 )
                     .run_if(in_state(AppState::Loaded)),
             )
@@ -133,20 +140,68 @@ fn spawn_main_menu(mut commands: Commands, asset: Res<GameAssets>) {
                     ..default()
                 },
                 TextColor(Color::WHITE),
-            ));
-            parent.spawn((
-                Text::new("Press Space to Start"),
-                TextFont {
-                    font: asset.font.clone(),
-                    font_size: 40.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
                 Node {
-                    margin: UiRect::top(Val::Px(20.0)),
+                    margin: UiRect::bottom(Val::Px(0.0)),
                     ..default()
                 },
             ));
+
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(50.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        overflow: Overflow::clip(),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(8.0)),
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
+                    MenuButton,
+                    StartButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Начать"),
+                        TextFont {
+                            font: asset.font.clone(),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(50.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        overflow: Overflow::clip(),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(8.0)),
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
+                    MenuButton,
+                    ExitButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Выход"),
+                        TextFont {
+                            font: asset.font.clone(),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
         });
 }
 

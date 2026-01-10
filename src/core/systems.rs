@@ -1,3 +1,4 @@
+use crate::core::components::{ExitButton, MenuButton, StartButton};
 use crate::states::game_state::GameState;
 use bevy::prelude::*;
 
@@ -9,7 +10,6 @@ pub fn transition_to_game_state(
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         match current_state.get() {
-            GameState::MainMenu => next_state.set(GameState::PreGame),
             GameState::GameOver => next_state.set(GameState::MainMenu),
             _ => {}
         }
@@ -33,5 +33,44 @@ pub fn transition_to_game_state(
 pub fn despawn_entities<T: Component>(mut commands: Commands, query: Query<Entity, With<T>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
+    }
+}
+
+pub fn handle_menu_button_clicks(
+    start_button_query: Query<&Interaction, (Changed<Interaction>, With<StartButton>)>,
+    exit_button_query: Query<&Interaction, (Changed<Interaction>, With<ExitButton>)>,
+    current_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut exit: EventWriter<AppExit>,
+) {
+    for interaction in &start_button_query {
+        if *interaction == Interaction::Pressed {
+            match current_state.get() {
+                GameState::MainMenu => next_state.set(GameState::PreGame),
+                _ => {}
+            }
+        }
+    }
+
+    for interaction in &exit_button_query {
+        if *interaction == Interaction::Pressed {
+            exit.send(AppExit::Success);
+        }
+    }
+}
+
+pub fn menu_button_hover_effect(
+    mut button_query: Query<(&Interaction, &mut BackgroundColor), With<MenuButton>>,
+) {
+    for (interaction, mut bg_color) in &mut button_query {
+        match *interaction {
+            Interaction::Hovered => {
+                *bg_color = BackgroundColor(Color::srgb(0.3, 0.3, 0.3));
+            }
+            Interaction::None => {
+                *bg_color = BackgroundColor(Color::srgb(0.2, 0.2, 0.2));
+            }
+            _ => {}
+        }
     }
 }
