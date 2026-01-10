@@ -10,6 +10,7 @@ pub struct Bird {
 }
 
 const VELOCITY_TO_ROTATION_RATIO: f32 = 7.5;
+const BIRD_SIZE: f32 = 50.0;
 
 pub struct BirdPlugin;
 
@@ -18,7 +19,7 @@ impl Plugin for BirdPlugin {
         app.add_systems(OnEnter(GameState::PreGame), spawn_bird)
             .add_systems(
                 Update,
-                (bird_movement, bird_jump).run_if(in_state(GameState::Playing)),
+                (bird_movement, bird_jump, check_bird_bounds).run_if(in_state(GameState::Playing)),
             )
             .add_systems(OnExit(GameState::GameOver), despawn_bird);
     }
@@ -28,7 +29,7 @@ fn spawn_bird(mut commands: Commands, assets: Res<GameAssets>) {
     commands.spawn((
         Sprite {
             image: assets.bird_texture.clone(),
-            custom_size: Some(Vec2::new(50.0, 50.0)),
+            custom_size: Some(Vec2::new(BIRD_SIZE, BIRD_SIZE)),
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 0.0),
@@ -59,4 +60,27 @@ fn bird_movement(time: Res<Time>, mut query: Query<(&mut Bird, &mut Transform)>)
 
 fn despawn_bird(commands: Commands, query: Query<Entity, With<Bird>>) {
     despawn_entities::<Bird>(commands, query);
+}
+
+fn check_bird_bounds(
+    query: Query<&Transform, With<Bird>>,
+    windows: Query<&Window>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if let Ok(window) = windows.get_single() {
+        let window_height = window.height();
+        let bird_height = BIRD_SIZE;
+
+        // Границы с учетом размера птицы
+        let top_bound = window_height / 2.0 - bird_height / 2.0;
+        let bottom_bound = -window_height / 2.0 + bird_height / 2.0;
+
+        if let Ok(bird_transform) = query.get_single() {
+            let bird_y = bird_transform.translation.y;
+
+            if bird_y > top_bound || bird_y < bottom_bound {
+                next_state.set(GameState::GameOver);
+            }
+        }
+    }
 }
