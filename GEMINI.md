@@ -1,40 +1,40 @@
 # GEMINI.md
 
-This file provides a comprehensive overview of the "Flappy Bird" clone project, intended to be used as a context for future AI-assisted development.
+Этот файл содержит всесторонний обзор проекта клона "Flappy Bird" и предназначен для использования в качестве контекста для будущей разработки с помощью ИИ.
 
-## Project Overview
+## Обзор проекта
 
-This project is a clone of the popular game "Flappy Bird," built using the [Bevy game engine](https://bevyengine.org/) in Rust. The game features a bird that the player controls by making it "jump" to navigate through a series of pipes.
+Этот проект представляет собой клон популярной игры "Flappy Bird", созданный с использованием игрового движка [Bevy](https://bevyengine.org/) на Rust. В игре представлена птица, которой игрок управляет, заставляя ее "прыгать", чтобы перемещаться по ряду труб.
 
-## Building and Running
+## Сборка и запуск
 
-To build and run the project, use the following `cargo` commands:
+Для сборки и запуска проекта используйте следующие команды `cargo`:
 
 ```bash
-# Build the project
+# Собрать проект
 cargo build
 
-# Run the project
+# Запустить проект
 cargo run
 ```
 
-## Project Structure
+## Структура проекта
 
-The project is organized into several modules, each with a specific responsibility:
+Проект организован в несколько модулей, каждый из которых имеет определенную ответственность:
 
--   `src/main.rs`: The main entry point of the application. It initializes the Bevy app, sets up the game window, and adds the main `GamePlugin`.
--   `src/states`: Defines the different game states, which control the flow of the game (`Menu`, `Playing`, `Paused`, `GameOver`).
--   `src/core`: The core module of the game. It contains the `GamePlugin`, which brings together all the other plugins and systems. It also defines core resources and systems that are used throughout the game.
--   `src/plugins`: This module contains the core gameplay logic, separated into plugins for different aspects of the game:
-    -   `asset_loader.rs`: Responsible for loading game assets like images and fonts.
-    -   `bird.rs`: Handles the bird's movement, jumping, and spawning/despawning.
-    -   `pipes.rs`: Manages the spawning, movement, and collision detection of the pipes, as well as the scoring system.
--   `assets`: This directory contains all the game's assets, such as images and fonts.
+-   `src/main.rs`: Основная точка входа в приложение. Он инициализирует приложение Bevy, настраивает игровое окно и добавляет основной `GamePlugin`.
+-   `src/states`: Определяет различные состояния игры, которые контролируют ход игры (`Menu`, `Playing`, `Paused`, `GameOver`).
+-   `src/core`: Основной модуль игры. Он содержит `GamePlugin`, который объединяет все остальные плагины и системы. Он также определяет основные ресурсы и системы, используемые на протяжении всей игры.
+-   `src/plugins`: Этот модуль содержит основную игровую логику, разделенную на плагины для различных аспектов игры:
+    -   `asset_loader.rs`: Отвечает за загрузку игровых ресурсов, таких как изображения и шрифты.
+    -   `bird.rs`: Управляет движением птицы, прыжками и появлением/исчезновением.
+    -   `pipes.rs`: Управляет появлением, движением и обнаружением столкновений труб, а также системой подсчета очков.
+-   `assets`: Этот каталог содержит все игровые ресурсы, такие как изображения и шрифты.
 
-## Development Conventions
+## Принципы разработки
 
-The project follows the standard conventions of a Bevy application, which is based on the Entity-Component-System (ECS) architecture. The game logic is organized into plugins, systems, and states, which allows for a modular and scalable codebase.
+Проект соответствует стандартным соглашениям приложения Bevy, основанного на архитектуре сущность-компонент-система (ECS). Игровая логика организована в плагины, системы и состояния, что обеспечивает модульную и масштабируемую кодовую базу.
 
--   **Plugins:** The game is divided into several plugins, each responsible for a specific feature (e.g., `BirdPlugin`, `PipesPlugin`).
--   **Systems:** Systems are functions that run on entities with specific components. They contain the game's logic (e.g., `bird_movement`, `check_collisions`).
--   **States:** The game's flow is managed by a state machine, which transitions between different `GameStates` (e.g., from `Menu` to `Playing`).
+-   **Плагины:** Игра разделена на несколько плагинов, каждый из которых отвечает за определенную функцию (например, `BirdPlugin`, `PipesPlugin`).
+-   **Системы:** Системы — это функции, которые работают с сущностями с определенными компонентами. Они содержат игровую логику (например, `bird_movement`, `check_collisions`).
+-   **Состояния:** Поток игры управляется конечным автоматом, который переключается между различными `GameStates` (например, из `Menu` в `Playing`).
