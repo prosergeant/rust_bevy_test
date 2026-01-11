@@ -19,6 +19,11 @@ fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
         bird_texture: asset_server.load("textures/bird.png"),
         pipe_texture: asset_server.load("textures/pipe.png"),
         font: asset_server.load("fonts/Roboto-Regular.ttf"),
+        // Загрузка аудио ассетов
+        jump_sound: asset_server.load("sounds/jump.wav"),
+        score_sound: asset_server.load("sounds/score.wav"),
+        hit_sound: asset_server.load("sounds/hit.wav"),
+        game_over_sound: asset_server.load("sounds/game_over.wav"),
     });
 }
 
@@ -34,8 +39,27 @@ fn check_assets_loaded(
         .load_state(game_assets.pipe_texture.id())
         .is_loaded();
     let font_loaded = asset_server.load_state(game_assets.font.id()).is_loaded();
+    let jump_sound_loaded = asset_server
+        .load_state(game_assets.jump_sound.id())
+        .is_loaded();
+    let score_sound_loaded = asset_server
+        .load_state(game_assets.score_sound.id())
+        .is_loaded();
+    let hit_sound_loaded = asset_server
+        .load_state(game_assets.hit_sound.id())
+        .is_loaded();
+    let game_over_sound_loaded = asset_server
+        .load_state(game_assets.game_over_sound.id())
+        .is_loaded();
 
-    if bird_loaded && pipe_loaded && font_loaded {
+    if bird_loaded
+        && pipe_loaded
+        && font_loaded
+        && jump_sound_loaded
+        && score_sound_loaded
+        && hit_sound_loaded
+        && game_over_sound_loaded
+    {
         next_state.set(AppState::Loaded);
     }
 }

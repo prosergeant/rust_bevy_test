@@ -151,6 +151,8 @@ fn check_collisions(
     pipe_query: Query<&Transform, With<Pipe>>,
     collider_query: Query<&Collider>,
     mut next_state: ResMut<NextState<GameState>>,
+    mut collision_events: EventWriter<super::audio::CollisionEvent>,
+    mut game_over_events: EventWriter<super::audio::GameOverEvent>,
 ) {
     if let Ok(bird_transform) = bird_query.get_single() {
         let bird_collider = Collider {
@@ -164,6 +166,10 @@ fn check_collisions(
                 pipe_transform.translation,
                 pipe_collider.size,
             ) {
+                // Отправляем звуковые события
+                collision_events.send(super::audio::CollisionEvent);
+                game_over_events.send(super::audio::GameOverEvent);
+
                 next_state.set(GameState::GameOver);
                 return;
             }
@@ -176,12 +182,15 @@ fn score_system(
     mut commands: Commands,
     query: Query<(Entity, &Transform), With<Scrollable>>,
     bird_query: Query<&Transform, With<Bird>>,
+    mut score_events: EventWriter<super::audio::ScoreEvent>,
 ) {
     if let Ok(bird_transform) = bird_query.get_single() {
         for (entity, transform) in &query {
             if transform.translation.x < bird_transform.translation.x - 50.0 {
                 score.0 += 1;
                 commands.entity(entity).remove::<Scrollable>();
+                // Отправляем событие получения очка
+                score_events.send(super::audio::ScoreEvent);
             }
         }
     }

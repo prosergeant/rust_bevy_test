@@ -42,11 +42,14 @@ fn bird_jump(
     mut query: Query<&mut Bird>,
     keys: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
+    mut jump_events: EventWriter<super::audio::JumpEvent>,
 ) {
     if keys.just_pressed(KeyCode::Space) || mouse_buttons.just_pressed(MouseButton::Left) {
         for mut bird in &mut query {
             bird.velocity = 500.0;
         }
+        // Отправляем событие прыжка для воспроизведения звука
+        jump_events.send(super::audio::JumpEvent);
     }
 }
 
@@ -70,6 +73,8 @@ fn check_bird_bounds(
     query: Query<&Transform, With<Bird>>,
     windows: Query<&Window>,
     mut next_state: ResMut<NextState<GameState>>,
+    mut collision_events: EventWriter<super::audio::CollisionEvent>,
+    mut game_over_events: EventWriter<super::audio::GameOverEvent>,
 ) {
     if let Ok(window) = windows.get_single() {
         let window_height = window.height();
@@ -83,6 +88,10 @@ fn check_bird_bounds(
             let bird_y = bird_transform.translation.y;
 
             if bird_y > top_bound || bird_y < bottom_bound {
+                // Отправляем звуковые события
+                collision_events.send(super::audio::CollisionEvent);
+                game_over_events.send(super::audio::GameOverEvent);
+
                 next_state.set(GameState::GameOver);
             }
         }

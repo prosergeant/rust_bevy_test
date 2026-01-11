@@ -4,5 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = "0.15"
+bevy = { version = "0.15", features = ["mp3"] }
 rand = "0.9"
+# Сериализация для сохранения рекордов
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Файловый I/O
+dirs = "5.0"
+# Утилиты времени
+chrono = { version = "0.4", features = ["serde"] }
