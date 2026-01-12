@@ -30,12 +30,6 @@ pub fn transition_to_game_state(
     }
 }
 
-pub fn despawn_entities<T: Component>(mut commands: Commands, query: Query<Entity, With<T>>) {
-    for entity in &query {
-        commands.entity(entity).despawn_recursive();
-    }
-}
-
 pub fn handle_menu_button_clicks(
     start_button_query: Query<&Interaction, (Changed<Interaction>, With<StartButton>)>,
     exit_button_query: Query<&Interaction, (Changed<Interaction>, With<ExitButton>)>,

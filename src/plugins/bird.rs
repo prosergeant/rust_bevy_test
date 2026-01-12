@@ -1,5 +1,5 @@
 use crate::{
-    core::{resources::GameAssets, systems::despawn_entities},
+    core::{resources::GameAssets, utils::despawn_entities},
     states::game_state::GameState,
 };
 use bevy::prelude::*;

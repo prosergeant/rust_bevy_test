@@ -2,7 +2,7 @@ use crate::{
     core::{
         components::{Collider, Scrollable},
         resources::*,
-        systems::despawn_entities,
+        utils::despawn_entities,
     },
     plugins::bird::Bird,
     states::game_state::GameState,

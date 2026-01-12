@@ -1,12 +1,14 @@
 pub mod components;
 pub mod resources;
 pub mod systems;
+pub mod utils;
 
 use self::components::{ExitButton, MenuButton, StartButton};
 use self::resources::{GameAssets, GameScore, HighScores};
 use self::systems::{
     despawn_entities, handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
 };
+use self::utils::despawn_entities;
 use crate::plugins::{
     asset_loader::AssetLoaderPlugin, audio::AudioPlugin, bird::BirdPlugin,
     high_score::HighScorePlugin, pipes::PipesPlugin,
