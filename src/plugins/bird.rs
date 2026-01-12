@@ -1,5 +1,6 @@
 use crate::{
     core::{resources::GameAssets, utils::despawn_entities},
+    plugins::audio::{CollisionEvent, GameOverEvent, JumpEvent},
     states::game_state::GameState,
 };
 use bevy::prelude::*;
@@ -21,7 +22,7 @@ impl Plugin for BirdPlugin {
                 Update,
                 (bird_movement, bird_jump, check_bird_bounds).run_if(in_state(GameState::Playing)),
             )
-            .add_systems(OnExit(GameState::GameOver), despawn_bird);
+            .add_systems(OnExit(GameState::GameOver), despawn_entities::<Bird>);
     }
 }
 
@@ -65,16 +66,12 @@ fn bird_movement(time: Res<Time>, mut query: Query<(&mut Bird, &mut Transform)>)
     }
 }
 
-fn despawn_bird(commands: Commands, query: Query<Entity, With<Bird>>) {
-    despawn_entities::<Bird>(commands, query);
-}
-
 fn check_bird_bounds(
     query: Query<&Transform, With<Bird>>,
     windows: Query<&Window>,
     mut next_state: ResMut<NextState<GameState>>,
-    mut collision_events: EventWriter<super::audio::CollisionEvent>,
-    mut game_over_events: EventWriter<super::audio::GameOverEvent>,
+    mut collision_events: EventWriter<CollisionEvent>,
+    mut game_over_events: EventWriter<GameOverEvent>,
 ) {
     if let Ok(window) = windows.get_single() {
         let window_height = window.height();
@@ -89,8 +86,8 @@ fn check_bird_bounds(
 
             if bird_y > top_bound || bird_y < bottom_bound {
                 // Отправляем звуковые события
-                collision_events.send(super::audio::CollisionEvent);
-                game_over_events.send(super::audio::GameOverEvent);
+                collision_events.send(CollisionEvent);
+                game_over_events.send(GameOverEvent);
 
                 next_state.set(GameState::GameOver);
             }

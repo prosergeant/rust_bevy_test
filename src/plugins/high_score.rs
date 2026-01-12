@@ -1,5 +1,5 @@
 use crate::core::resources::{GameAssets, GameScore, HighScoreEntry, HighScores};
-use crate::states::game_state::GameState;
+use crate::states::game_state::{GameOverSet, GameState};
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
 use bevy::ui::{AlignItems, FlexDirection, Node, UiRect, Val};
@@ -13,7 +13,10 @@ impl Plugin for HighScorePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<HighScores>()
             .add_systems(Startup, load_high_scores)
-            .add_systems(OnEnter(GameState::GameOver), update_high_scores_and_save)
+            .add_systems(
+                OnEnter(GameState::GameOver),
+                update_high_scores_and_save.in_set(GameOverSet::UpdateScores),
+            )
             .add_systems(OnExit(GameState::GameOver), save_high_scores);
     }
 }
@@ -104,7 +107,7 @@ pub fn spawn_game_over_high_scores(
             Color::srgb(0.8, 0.8, 0.8)
         };
         let text = if is_new_record {
-            format!("🏆 НОВЫЙ РЕКОРД: {}!", best_score.score)
+            format!("🏆 НОВЫЙ РЕКОРД: {}!", score.0)
         } else {
             format!("Лучший рекорд: {}", best_score.score)
         };

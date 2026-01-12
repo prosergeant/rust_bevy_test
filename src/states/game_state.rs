@@ -9,3 +9,9 @@ pub enum GameState {
     Paused,
     GameOver,
 }
+
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum GameOverSet {
+    UpdateScores,
+    SpawnUi,
+}

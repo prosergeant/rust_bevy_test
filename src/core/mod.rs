@@ -17,7 +17,7 @@ use crate::plugins::{
     pipes::PipesPlugin,
 };
 use crate::states::app_state::AppState; // Added AppState import
-use crate::states::game_state::GameState;
+use crate::states::game_state::{GameOverSet, GameState};
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
 use bevy::ui::{AlignItems, BorderRadius, FlexDirection, JustifyContent, Node, Overflow, Val};
@@ -78,7 +78,10 @@ impl Plugin for GamePlugin {
             )
             .add_systems(
                 OnEnter(GameState::GameOver),
-                spawn_game_over_screen.run_if(in_state(AppState::Loaded)),
+                spawn_game_over_screen
+                    .in_set(GameOverSet::SpawnUi)
+                    .after(GameOverSet::UpdateScores)
+                    .run_if(in_state(AppState::Loaded)),
             )
             .add_systems(
                 OnExit(GameState::GameOver),
