@@ -11,6 +11,8 @@ pub struct GameAssets {
     pub score_sound: Handle<AudioSource>,
     pub hit_sound: Handle<AudioSource>,
     pub game_over_sound: Handle<AudioSource>,
+    // Фоновые текстуры
+    pub background_layers: Vec<Handle<Image>>,
 }
 
 #[derive(Resource, Default)]

@@ -326,6 +326,117 @@ fn score_system(
 }
 ```
 
+## Параллакс фон
+
+### Архитектура параллакс системы
+Проект использует многослойную систему параллакс фона для создания глубины:
+
+```rust
+/// Компонент для слоя параллакс фона
+#[derive(Component)]
+pub struct BackgroundLayer {
+    pub scroll_speed: f32,
+}
+
+/// Маркер-компонент для родителя слоев фона
+#[derive(Component, Default)]
+pub struct ParallaxBackground;
+```
+
+### Конфигурация слоев
+Каждый слой имеет свою скорость и Z-позицию для создания глубины:
+
+```rust
+/// Константы для настройки параллакс фона
+pub const BACKGROUND_LAYER_WIDTH: f32 = 1600.0;
+pub const BACKGROUND_LAYER_HEIGHT: f32 = 600.0;
+pub const LAYER_SPEEDS: [f32; 3] = [20.0, 50.0, 80.0];
+pub const LAYER_Z_POSITIONS: [f32; 3] = [-1000.0, -500.0, -100.0];
+```
+
+### Бесшовная прокрутка
+Используется техника с двумя спрайтами на каждый слой:
+
+```rust
+/// Создает слои параллакс фона с двумя спрайтами на каждый слой для бесшовной прокрутки
+pub fn spawn_background_layers(mut commands: Commands, assets: Res<GameAssets>) {
+    // Создаем родительскую сущность для всех слоев фона
+    commands.spawn((ParallaxBackground, Transform::default(), Visibility::default()));
+
+    // Создаем по 2 спрайта на каждый слой для бесшовной прокрутки
+    for (i, texture) in assets.background_layers.iter().enumerate() {
+        // Первый спрайт (основной)
+        commands.spawn((
+            Sprite { image: texture.clone(), ..default() },
+            Transform::from_translation(Vec3::new(0.0, 0.0, LAYER_Z_POSITIONS[i])),
+            BackgroundLayer { scroll_speed: LAYER_SPEEDS[i] },
+        ));
+
+        // Второй спрайт (для бесшовности)
+        commands.spawn((
+            Sprite { image: texture.clone(), ..default() },
+            Transform::from_translation(Vec3::new(BACKGROUND_LAYER_WIDTH, 0.0, LAYER_Z_POSITIONS[i])),
+            BackgroundLayer { scroll_speed: LAYER_SPEEDS[i] },
+        ));
+    }
+}
+```
+
+### Анимация прокрутки
+```rust
+/// Анимирует прокрутку слоев параллакс фона с разной скоростью для каждого слоя
+pub fn parallax_scroll(time: Res<Time>, mut query: Query<(&mut Transform, &BackgroundLayer)>) {
+    for (mut transform, layer) in &mut query {
+        // Двигаем слой влево с его скоростью
+        transform.translation.x -= layer.scroll_speed * time.delta_secs();
+
+        // Бесшовная прокрутка - когда спрайт уходит за левый край,
+        // переносим его за правый край
+        if transform.translation.x <= -BACKGROUND_LAYER_WIDTH {
+            transform.translation.x += BACKGROUND_LAYER_WIDTH * 2.0;
+        }
+    }
+}
+```
+
+### Регистрация систем
+Параллакс фон активен в состояниях Playing и MainMenu:
+
+```rust
+impl Plugin for BackgroundPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(AppState::Loaded), spawn_background_layers)
+            .add_systems(
+                Update,
+                parallax_scroll.run_if(
+                    in_state(AppState::Loaded).and(
+                        in_state(GameState::Playing).or(in_state(GameState::MainMenu))
+                    ),
+                ),
+            );
+    }
+}
+```
+
+### Ресурсы для фона
+Текстуры фоновых слоев загружаются через GameAssets:
+
+```rust
+#[derive(Resource)]
+pub struct GameAssets {
+    // ... другие ассеты
+    pub background_layers: Vec<Handle<Image>>,
+}
+```
+
+### Лучшие практики для параллакс фона
+
+1. **Минималистичные компоненты**: Используйте только необходимые поля (scroll_speed)
+2. **Маркер-компоненты**: ParallaxBackground используется только как маркер
+3. **Конфигурация через константы**: Все параметры настроены через именованные константы
+4. **Бесшовность**: Всегда используйте 2+ спрайта на слой для бесшовной прокрутки
+5. **Производительность**: Система работает только в нужных состояниях игры
+
 ### Анимация спрайтов
 
 #### Создание компонентов анимации с Timer

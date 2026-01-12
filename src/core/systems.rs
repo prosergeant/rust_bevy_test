@@ -8,11 +8,8 @@ pub fn transition_to_game_state(
     mut next_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        match current_state.get() {
-            GameState::GameOver => next_state.set(GameState::MainMenu),
-            _ => {}
-        }
+    if keyboard_input.just_pressed(KeyCode::Space) && current_state.get() == &GameState::GameOver {
+        next_state.set(GameState::MainMenu);
     }
 
     if keyboard_input.just_pressed(KeyCode::Escape) {
@@ -40,11 +37,8 @@ pub fn handle_menu_button_clicks(
     mut exit: EventWriter<AppExit>,
 ) {
     for interaction in &start_button_query {
-        if *interaction == Interaction::Pressed {
-            match current_state.get() {
-                GameState::MainMenu => next_state.set(GameState::PreGame),
-                _ => {}
-            }
+        if *interaction == Interaction::Pressed && current_state.get() == &GameState::MainMenu {
+            next_state.set(GameState::PreGame);
         }
     }
 
@@ -55,20 +49,14 @@ pub fn handle_menu_button_clicks(
     }
 
     for interaction in &restart_button_query {
-        if *interaction == Interaction::Pressed {
-            match current_state.get() {
-                GameState::GameOver => next_state.set(GameState::PreGame),
-                _ => {}
-            }
+        if *interaction == Interaction::Pressed && current_state.get() == &GameState::GameOver {
+            next_state.set(GameState::PreGame);
         }
     }
 
     for interaction in &main_menu_button_query {
-        if *interaction == Interaction::Pressed {
-            match current_state.get() {
-                GameState::GameOver => next_state.set(GameState::MainMenu),
-                _ => {}
-            }
+        if *interaction == Interaction::Pressed && current_state.get() == &GameState::GameOver {
+            next_state.set(GameState::MainMenu);
         }
     }
 }

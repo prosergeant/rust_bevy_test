@@ -12,11 +12,12 @@ use self::utils::despawn_entities;
 use crate::plugins::{
     asset_loader::AssetLoaderPlugin,
     audio::AudioPlugin,
+    background::BackgroundPlugin,
     bird::BirdPlugin,
     high_score::{spawn_game_over_high_scores, HighScorePlugin},
     pipes::PipesPlugin,
 };
-use crate::states::app_state::AppState; // Added AppState import
+use crate::states::app_state::AppState;
 use crate::states::game_state::{GameOverSet, GameState};
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
@@ -43,6 +44,7 @@ impl Plugin for GamePlugin {
             .add_plugins((
                 AssetLoaderPlugin,
                 AudioPlugin,
+                BackgroundPlugin,
                 BirdPlugin,
                 PipesPlugin,
                 HighScorePlugin,
@@ -105,7 +107,7 @@ fn init_game_state(mut next_state: ResMut<NextState<GameState>>) {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d::default());
+    commands.spawn(Camera2d);
 }
 
 fn reset_score(mut score: ResMut<GameScore>) {
