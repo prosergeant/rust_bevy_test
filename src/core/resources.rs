@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Resource)]
 pub struct GameAssets {
-    pub bird_texture: Handle<Image>,
+    pub bird_textures: Vec<Handle<Image>>,
     pub pipe_texture: Handle<Image>,
     pub font: Handle<Font>,
     // Аудио ассеты

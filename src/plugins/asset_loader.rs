@@ -16,7 +16,11 @@ impl Plugin for AssetLoaderPlugin {
 
 fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(GameAssets {
-        bird_texture: asset_server.load("textures/bird.png"),
+        bird_textures: vec![
+            asset_server.load("textures/bird_up.png"),
+            asset_server.load("textures/bird_mid.png"),
+            asset_server.load("textures/bird_down.png"),
+        ],
         pipe_texture: asset_server.load("textures/pipe.png"),
         font: asset_server.load("fonts/Roboto-Regular.ttf"),
         // Загрузка аудио ассетов
@@ -32,9 +36,10 @@ fn check_assets_loaded(
     asset_server: Res<AssetServer>,
     game_assets: Res<GameAssets>,
 ) {
-    let bird_loaded = asset_server
-        .load_state(game_assets.bird_texture.id())
-        .is_loaded();
+    let bird_textures_loaded = game_assets
+        .bird_textures
+        .iter()
+        .all(|texture| asset_server.load_state(texture.id()).is_loaded());
     let pipe_loaded = asset_server
         .load_state(game_assets.pipe_texture.id())
         .is_loaded();
@@ -52,7 +57,7 @@ fn check_assets_loaded(
         .load_state(game_assets.game_over_sound.id())
         .is_loaded();
 
-    if bird_loaded
+    if bird_textures_loaded
         && pipe_loaded
         && font_loaded
         && jump_sound_loaded
