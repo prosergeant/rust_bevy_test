@@ -57,7 +57,7 @@ fn bird_movement(
 ) {
     let jumped = reader.read().next().is_some();
 
-    for (mut bird, mut transform) in &mut query {
+    if let Ok((mut bird, mut transform)) = query.get_single_mut() {
         if jumped {
             bird.velocity = 500.0;
         }
