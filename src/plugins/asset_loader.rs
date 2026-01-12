@@ -30,8 +30,8 @@ fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
         game_over_sound: asset_server.load("sounds/game_over.wav"),
         // Загрузка фоновых слоев
         background_layers: vec![
+            asset_server.load("backgrounds/bg_0.png"),    // горы
             asset_server.load("backgrounds/layer_1.png"), // облака
-            asset_server.load("backgrounds/bg_0.png"), // горы
             asset_server.load("backgrounds/layer_2.png"), // деревья
         ],
     });
