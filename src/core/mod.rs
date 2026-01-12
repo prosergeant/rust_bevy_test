@@ -6,12 +6,15 @@ pub mod utils;
 use self::components::{ExitButton, MenuButton, StartButton};
 use self::resources::{GameAssets, GameScore, HighScores};
 use self::systems::{
-    despawn_entities, handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
+    handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
 };
 use self::utils::despawn_entities;
 use crate::plugins::{
-    asset_loader::AssetLoaderPlugin, audio::AudioPlugin, bird::BirdPlugin,
-    high_score::HighScorePlugin, pipes::PipesPlugin,
+    asset_loader::AssetLoaderPlugin,
+    audio::AudioPlugin,
+    bird::BirdPlugin,
+    high_score::{spawn_game_over_high_scores, HighScorePlugin},
+    pipes::PipesPlugin,
 };
 use crate::states::app_state::AppState; // Added AppState import
 use crate::states::game_state::GameState;
@@ -222,8 +225,8 @@ fn spawn_main_menu(mut commands: Commands, asset: Res<GameAssets>) {
 fn spawn_game_over_screen(
     mut commands: Commands,
     score: Res<GameScore>,
-    asset: Res<GameAssets>,
     high_scores: Res<HighScores>,
+    asset: Res<GameAssets>,
 ) {
     commands
         .spawn((
@@ -262,86 +265,7 @@ fn spawn_game_over_screen(
                 },
             ));
 
-            // Отображаем лучший рекорд
-            if let Some(best_score) = high_scores.scores.first() {
-                let is_new_record = score.0 >= best_score.score;
-                let color = if is_new_record {
-                    Color::srgb(1.0, 0.84, 0.0)
-                } else {
-                    Color::srgb(0.8, 0.8, 0.8)
-                };
-                let text = if is_new_record {
-                    format!("🏆 НОВЫЙ РЕКОРД: {}!", best_score.score)
-                } else {
-                    format!("Лучший рекорд: {}", best_score.score)
-                };
-
-                parent.spawn((
-                    Text::new(text),
-                    TextFont {
-                        font: asset.font.clone(),
-                        font_size: 32.0,
-                        ..default()
-                    },
-                    TextColor(color),
-                    Node {
-                        margin: UiRect::bottom(Val::Px(20.0)),
-                        ..default()
-                    },
-                ));
-            }
-
-            // Отображаем таблицу рекордов
-            if !high_scores.scores.is_empty() {
-                parent
-                    .spawn((Node {
-                        flex_direction: FlexDirection::Column,
-                        align_items: AlignItems::Center,
-                        margin: UiRect::bottom(Val::Px(20.0)),
-                        ..default()
-                    },))
-                    .with_children(|parent| {
-                        parent.spawn((
-                            Text::new("📊 Топ рекордов"),
-                            TextFont {
-                                font: asset.font.clone(),
-                                font_size: 24.0,
-                                ..default()
-                            },
-                            TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                            Node {
-                                margin: UiRect::bottom(Val::Px(10.0)),
-                                ..default()
-                            },
-                        ));
-
-                        // Показываем топ 5 рекордов
-                        for (index, entry) in high_scores.scores.iter().take(5).enumerate() {
-                            let medal = match index {
-                                0 => "🥇",
-                                1 => "🥈",
-                                2 => "🥉",
-                                _ => "  ",
-                            };
-
-                            parent.spawn((
-                                Text::new(format!(
-                                    "{} {}. {} - {} очков",
-                                    medal,
-                                    index + 1,
-                                    entry.date.split(' ').next().unwrap_or(&entry.date),
-                                    entry.score
-                                )),
-                                TextFont {
-                                    font: asset.font.clone(),
-                                    font_size: 18.0,
-                                    ..default()
-                                },
-                                TextColor(Color::srgb(0.6, 0.6, 0.6)),
-                            ));
-                        }
-                    });
-            }
+            spawn_game_over_high_scores(parent, &score, &high_scores, &asset);
 
             parent.spawn((
                 Text::new("Нажмите Пробел для перезапуска"),

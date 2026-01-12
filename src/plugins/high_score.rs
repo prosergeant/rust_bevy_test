@@ -1,12 +1,10 @@
 use crate::core::resources::{GameAssets, GameScore, HighScoreEntry, HighScores};
 use crate::states::game_state::GameState;
 use bevy::prelude::*;
+use bevy::text::{TextColor, TextFont};
+use bevy::ui::{AlignItems, FlexDirection, Node, UiRect, Val};
 use std::fs;
 use std::path::PathBuf;
-
-/// Компонент-маркер для отображения таблицы рекордов
-#[derive(Component)]
-pub struct HighScoreDisplay;
 
 /// Плагин для управления системой рекордов
 pub struct HighScorePlugin;
@@ -90,68 +88,89 @@ pub fn update_high_scores_and_save(
     }
 }
 
-/// Отображает таблицу рекордов на экране
-pub fn display_high_scores(
-    mut commands: Commands,
-    high_scores: Res<HighScores>,
-    assets: Res<GameAssets>,
+/// Отображает рекорды на экране Game Over
+pub fn spawn_game_over_high_scores(
+    parent: &mut ChildBuilder,
+    score: &GameScore,
+    high_scores: &HighScores,
+    assets: &GameAssets,
 ) {
-    if high_scores.scores.is_empty() {
-        commands.spawn((
-            Text::new("Пока нет рекордов!"),
+    // Отображаем лучший рекорд
+    if let Some(best_score) = high_scores.scores.first() {
+        let is_new_record = score.0 >= best_score.score;
+        let color = if is_new_record {
+            Color::srgb(1.0, 0.84, 0.0)
+        } else {
+            Color::srgb(0.8, 0.8, 0.8)
+        };
+        let text = if is_new_record {
+            format!("🏆 НОВЫЙ РЕКОРД: {}!", best_score.score)
+        } else {
+            format!("Лучший рекорд: {}", best_score.score)
+        };
+
+        parent.spawn((
+            Text::new(text),
             TextFont {
                 font: assets.font.clone(),
-                font_size: 24.0,
+                font_size: 32.0,
                 ..default()
             },
-            TextColor(Color::WHITE),
-            HighScoreDisplay,
+            TextColor(color),
             Node {
-                margin: UiRect::top(Val::Px(20.0)),
+                margin: UiRect::bottom(Val::Px(20.0)),
                 ..default()
             },
         ));
-    } else {
-        commands
-            .spawn((
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    margin: UiRect::top(Val::Px(20.0)),
-                    ..default()
-                },
-                HighScoreDisplay,
-            ))
+    }
+
+    // Отображаем таблицу рекордов
+    if !high_scores.scores.is_empty() {
+        parent
+            .spawn((Node {
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                margin: UiRect::bottom(Val::Px(20.0)),
+                ..default()
+            },))
             .with_children(|parent| {
                 parent.spawn((
-                    Text::new("🏆 Рекорды"),
+                    Text::new("📊 Топ рекордов"),
                     TextFont {
                         font: assets.font.clone(),
-                        font_size: 32.0,
+                        font_size: 24.0,
                         ..default()
                     },
-                    TextColor(Color::srgb(1.0, 0.84, 0.0)),
+                    TextColor(Color::srgb(0.7, 0.7, 0.7)),
                     Node {
-                        margin: UiRect::bottom(Val::Px(15.0)),
+                        margin: UiRect::bottom(Val::Px(10.0)),
                         ..default()
                     },
                 ));
 
-                for (index, entry) in high_scores.scores.iter().enumerate() {
+                // Показываем топ 5 рекордов
+                for (index, entry) in high_scores.scores.iter().take(5).enumerate() {
+                    let medal = match index {
+                        0 => "🥇",
+                        1 => "🥈",
+                        2 => "🥉",
+                        _ => "  ",
+                    };
+
                     parent.spawn((
                         Text::new(format!(
-                            "{}. {} - {} очков ({})",
+                            "{} {}. {} - {} очков",
+                            medal,
                             index + 1,
-                            entry.date,
-                            entry.score,
-                            entry.difficulty
+                            entry.date.split(' ').next().unwrap_or(&entry.date),
+                            entry.score
                         )),
                         TextFont {
                             font: assets.font.clone(),
                             font_size: 18.0,
                             ..default()
                         },
-                        TextColor(Color::WHITE),
+                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
                         Node {
                             margin: UiRect::vertical(Val::Px(5.0)),
                             ..default()
@@ -159,16 +178,6 @@ pub fn display_high_scores(
                     ));
                 }
             });
-    }
-}
-
-/// Удаляет отображение рекордов
-pub fn despawn_high_score_display(
-    mut commands: Commands,
-    query: Query<Entity, With<HighScoreDisplay>>,
-) {
-    for entity in &query {
-        commands.entity(entity).despawn_recursive();
     }
 }
 
@@ -184,24 +193,6 @@ fn get_high_scores_path() -> Option<PathBuf> {
             // Fallback к локальному файлу если системная директория недоступна
             Some(PathBuf::from("high_scores.json"))
         }
-    }
-}
-
-/// Получает лучший рекорд
-pub fn get_best_score(high_scores: &HighScores) -> Option<u32> {
-    high_scores.scores.first().map(|entry| entry.score)
-}
-
-/// Проверяет является ли текущий счёт рекордом
-pub fn is_new_high_score(score: u32, high_scores: &HighScores) -> bool {
-    if high_scores.scores.is_empty() {
-        return true;
-    }
-
-    if let Some(best_score) = get_best_score(high_scores) {
-        score > best_score
-    } else {
-        true
     }
 }
 
