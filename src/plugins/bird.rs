@@ -40,24 +40,30 @@ fn spawn_bird(mut commands: Commands, assets: Res<GameAssets>) {
 }
 
 fn bird_jump(
-    mut query: Query<&mut Bird>,
     keys: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
-    mut jump_events: EventWriter<super::audio::JumpEvent>,
+    mut jump_events: EventWriter<JumpEvent>,
 ) {
     if keys.just_pressed(KeyCode::Space) || mouse_buttons.just_pressed(MouseButton::Left) {
-        for mut bird in &mut query {
-            bird.velocity = 500.0;
-        }
         // Отправляем событие прыжка для воспроизведения звука
-        jump_events.send(super::audio::JumpEvent);
+        jump_events.send(JumpEvent);
     }
 }
 
-fn bird_movement(time: Res<Time>, mut query: Query<(&mut Bird, &mut Transform)>) {
+fn bird_movement(
+    time: Res<Time>,
+    mut reader: EventReader<JumpEvent>,
+    mut query: Query<(&mut Bird, &mut Transform)>,
+) {
+    let jumped = reader.read().next().is_some();
+
     for (mut bird, mut transform) in &mut query {
+        if jumped {
+            bird.velocity = 500.0;
+        }
+
         bird.velocity -= 2000.0 * time.delta_secs();
-        transform.translation.y += bird.velocity * time.delta_secs(); // * 100.0;
+        transform.translation.y += bird.velocity * time.delta_secs();
 
         transform.rotation = Quat::from_axis_angle(
             Vec3::Z,
