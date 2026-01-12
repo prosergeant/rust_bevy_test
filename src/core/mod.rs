@@ -3,8 +3,8 @@ pub mod resources;
 pub mod systems;
 pub mod utils;
 
-use self::components::{ExitButton, MenuButton, StartButton};
-use self::resources::{GameAssets, GameScore, HighScores};
+use self::components::{ExitButton, MainMenuButton, MenuButton, RestartButton, StartButton};
+use self::resources::{GameAssets, GameOverUIState, GameScore, HighScores};
 use self::systems::{
     handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
 };
@@ -20,7 +20,9 @@ use crate::states::app_state::AppState; // Added AppState import
 use crate::states::game_state::{GameOverSet, GameState};
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
-use bevy::ui::{AlignItems, BorderRadius, FlexDirection, JustifyContent, Node, Overflow, Val};
+use bevy::ui::{
+    AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, Node, Overflow, Val,
+};
 
 pub struct GamePlugin;
 
@@ -36,6 +38,7 @@ pub struct StateDisplayText;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GameScore>()
+            .init_resource::<GameOverUIState>()
             .init_state::<GameState>()
             .add_plugins((
                 AssetLoaderPlugin,
@@ -84,8 +87,15 @@ impl Plugin for GamePlugin {
                     .run_if(in_state(AppState::Loaded)),
             )
             .add_systems(
+                Update,
+                show_game_over_ui.run_if(in_state(GameState::GameOver)),
+            )
+            .add_systems(
                 OnExit(GameState::GameOver),
-                despawn_entities::<OnGameOverScreen>,
+                (
+                    despawn_entities::<OnGameOverScreen>,
+                    reset_game_over_ui_timer,
+                ),
             );
     }
 }
@@ -127,6 +137,32 @@ fn spawn_state_ui(mut commands: Commands, asset: Res<GameAssets>) {
                 StateDisplayText, // маркер для поиска
             ));
         });
+}
+
+/// Сбрасывает состояние Game Over UI при выходе из состояния
+fn reset_game_over_ui_timer(mut ui_state: ResMut<GameOverUIState>) {
+    ui_state.timer = 0.0;
+    ui_state.is_visible = false;
+}
+
+/// Показать Game Over UI после небольшой задержки
+fn show_game_over_ui(
+    time: Res<Time>,
+    mut game_over_ui_query: Query<&mut Node, With<OnGameOverScreen>>,
+    mut ui_state: ResMut<GameOverUIState>,
+) {
+    // Если UI уже отображён, не выполняем систему
+    if ui_state.is_visible {
+        return;
+    }
+
+    ui_state.timer += time.delta_secs();
+    if ui_state.timer >= 0.5 && ui_state.timer < 0.6 {
+        for mut node in &mut game_over_ui_query {
+            node.display = Display::Flex;
+            ui_state.is_visible = true;
+        }
+    }
 }
 fn update_state_display(
     mut query: Query<&mut Text, With<StateDisplayText>>,
@@ -230,7 +266,12 @@ fn spawn_game_over_screen(
     score: Res<GameScore>,
     high_scores: Res<HighScores>,
     asset: Res<GameAssets>,
+    mut ui_state: ResMut<GameOverUIState>,
 ) {
+    // Устанавливаем флаг состояния
+    ui_state.timer = 0.0;
+    ui_state.is_visible = false;
+
     commands
         .spawn((
             Node {
@@ -239,6 +280,7 @@ fn spawn_game_over_screen(
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
+                display: Display::None,
                 ..default()
             },
             OnGameOverScreen,
@@ -270,14 +312,64 @@ fn spawn_game_over_screen(
 
             spawn_game_over_high_scores(parent, &score, &high_scores, &asset);
 
-            parent.spawn((
-                Text::new("Нажмите Пробел для перезапуска"),
-                TextFont {
-                    font: asset.font.clone(),
-                    font_size: 40.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
+            // Кнопка перезапуска
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(50.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        margin: UiRect::all(Val::Px(10.0)),
+                        overflow: Overflow::clip(),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(8.0)),
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
+                    MenuButton,
+                    RestartButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Перезапустить"),
+                        TextFont {
+                            font: asset.font.clone(),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+            // Кнопка главного меню
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(50.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        margin: UiRect::all(Val::Px(10.0)),
+                        overflow: Overflow::clip(),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(8.0)),
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
+                    MenuButton,
+                    MainMenuButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Главное меню"),
+                        TextFont {
+                            font: asset.font.clone(),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
         });
 }

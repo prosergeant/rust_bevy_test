@@ -49,3 +49,10 @@ impl HighScoreEntry {
         }
     }
 }
+
+/// Ресурс для управления состоянием Game Over UI
+#[derive(Resource, Default)]
+pub struct GameOverUIState {
+    pub timer: f32,
+    pub is_visible: bool,
+}

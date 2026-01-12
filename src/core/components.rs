@@ -16,3 +16,9 @@ pub struct StartButton;
 
 #[derive(Component)]
 pub struct ExitButton;
+
+#[derive(Component)]
+pub struct RestartButton;
+
+#[derive(Component)]
+pub struct MainMenuButton;
