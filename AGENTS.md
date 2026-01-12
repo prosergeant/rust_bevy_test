@@ -326,6 +326,160 @@ fn score_system(
 }
 ```
 
+### Анимация спрайтов
+
+#### Создание компонентов анимации с Timer
+Используйте `Timer` для управления частотой смены кадров:
+
+```rust
+#[derive(Component)]
+pub struct SpriteAnimation {
+    pub timer: Timer,
+    pub current_frame: usize,
+    pub total_frames: usize,
+    pub frame_duration: f32,
+}
+
+#[derive(Component)]
+pub struct AnimatedBird {
+    pub animation_frames: Vec<Handle<Image>>,
+    pub state: BirdAnimationState,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BirdAnimationState {
+    Idle,
+    Flying,
+    Falling,
+}
+```
+
+#### Организация загрузки множественных текстур
+Храните все кадры анимации в векторе внутри ресурсов:
+
+```rust
+#[derive(Resource)]
+pub struct GameAssets {
+    pub bird_animations: Vec<Handle<Image>>,
+    pub pipe_texture: Handle<Image>,
+    pub font: Handle<Font>,
+}
+
+// Загрузка множественных текстур
+fn load_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    let mut bird_frames = Vec::new();
+    for i in 0..4 {
+        bird_frames.push(asset_server.load(format!("bird_{}.png", i)));
+    }
+
+    commands.insert_resource(GameAssets {
+        bird_animations: bird_frames,
+        pipe_texture: asset_server.load("pipe.png"),
+        font: asset_server.load("font.ttf"),
+    });
+}
+```
+
+#### Лучшие практики для контекстной анимации
+Используйте контекстные состояния для изменения анимации:
+
+```rust
+fn update_bird_animation(
+    time: Res<Time>,
+    mut query: Query<(&mut SpriteAnimation, &AnimatedBird, &Bird)>,
+) {
+    for (mut animation, animated_bird, bird) in &mut query {
+        // Определяем состояние на основе скорости
+        let new_state = if bird.velocity > 100.0 {
+            BirdAnimationState::Flying
+        } else if bird.velocity < -100.0 {
+            BirdAnimationState::Falling
+        } else {
+            BirdAnimationState::Idle
+        };
+
+        // Обновляем анимацию только если состояние изменилось
+        if new_state != animated_bird.state {
+            animation.current_frame = 0;
+            animation.timer.reset();
+        }
+
+        animation.timer.tick(time.delta());
+        if animation.timer.finished() {
+            animation.current_frame = (animation.current_frame + 1) % animation.total_frames;
+            animation.timer.reset();
+        }
+    }
+}
+```
+
+#### Пример организации спрайт-анимации в Bevy
+Полный пример анимации птицы с изменением текстуры:
+
+```rust
+#[derive(Component)]
+pub struct AnimatedSprite {
+    pub frames: Vec<Handle<Image>>,
+    pub current_frame: usize,
+    pub timer: Timer,
+}
+
+fn spawn_animated_bird(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+) {
+    commands.spawn((
+        AnimatedSprite {
+            frames: assets.bird_animations.clone(),
+            current_frame: 0,
+            timer: Timer::from_seconds(0.1, TimerMode::Repeating),
+        },
+        Bird { velocity: 0.0 },
+        SpriteBundle {
+            texture: assets.bird_animations[0].clone(),
+            transform: Transform::from_scale(Vec3::splat(BIRD_SIZE)),
+            ..default()
+        },
+    ));
+}
+
+fn animate_sprites(
+    time: Res<Time>,
+    mut query: Query<(&mut AnimatedSprite, &mut Handle<Image>)>,
+) {
+    for (mut animation, mut texture) in &mut query {
+        animation.timer.tick(time.delta());
+        
+        if animation.timer.finished() {
+            animation.current_frame = (animation.current_frame + 1) % animation.frames.len();
+            *texture = animation.frames[animation.current_frame].clone();
+            animation.timer.reset();
+        }
+    }
+}
+```
+
+#### Регистрация систем анимации в плагине
+```rust
+impl Plugin for BirdPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(GameState::PreGame), spawn_animated_bird)
+            .add_systems(
+                Update,
+                (
+                    bird_movement,
+                    bird_jump,
+                    update_bird_animation,
+                    animate_sprites,
+                ).run_if(in_state(GameState::Playing)),
+            );
+    }
+}
+```
+
 ## Соглашения по именованию
 
 - **Компоненты**: PascalCase (`Bird`, `Pipe`, `MenuButton`)
