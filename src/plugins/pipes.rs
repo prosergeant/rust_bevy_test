@@ -1,6 +1,7 @@
 use crate::{
     core::{
         components::{Collider, Scrollable},
+        difficulty_types::{DifficultyParams, DifficultySettings},
         resources::*,
         utils::despawn_entities,
     },
@@ -10,10 +11,7 @@ use crate::{
 };
 use bevy::prelude::*;
 
-const PIPE_GAP: f32 = 300.0;
 const PIPE_WIDTH: f32 = 80.0;
-const PIPE_SPAWN_INTERVAL: f32 = 2.0; // Интервал спавна труб
-const PIPE_DISTANCE: f32 = 400.0; // Расстояние между трубами
 const OFFSCREEN_THRESHOLD: f32 = -400.0; // Порог удаления труб
 
 #[derive(Component)]
@@ -28,7 +26,7 @@ pub struct PipeSpawner {
 impl Default for PipeSpawner {
     fn default() -> Self {
         Self {
-            timer: Timer::from_seconds(PIPE_SPAWN_INTERVAL, TimerMode::Repeating),
+            timer: Timer::from_seconds(2.0, TimerMode::Repeating),
             last_pipe_x: 400.0,
         }
     }
@@ -60,18 +58,31 @@ fn spawn_pipes(
     assets: Res<GameAssets>,
     windows: Query<&Window>,
     mut spawner: ResMut<PipeSpawner>,
+    difficulty: Res<DifficultySettings>,
 ) {
     let window = windows.single();
     let window_height = window.height();
 
     for i in 0..3 {
-        let pipe_x = 400.0 + i as f32 * 300.0;
-        spawn_pipe_pair(&mut commands, &assets, window_height, pipe_x);
+        let pipe_x = 400.0 + i as f32 * difficulty.current_params.pipe_distance;
+        spawn_pipe_pair(
+            &mut commands,
+            &assets,
+            window_height,
+            pipe_x,
+            &difficulty.current_params,
+        );
         spawner.last_pipe_x = pipe_x;
     }
 }
 
-fn spawn_pipe_pair(commands: &mut Commands, assets: &GameAssets, window_height: f32, pipe_x: f32) {
+fn spawn_pipe_pair(
+    commands: &mut Commands,
+    assets: &GameAssets,
+    window_height: f32,
+    pipe_x: f32,
+    params: &DifficultyParams,
+) {
     let gap_y = rand::random::<f32>() * 200.0 - 100.0;
 
     // Верхняя труба
@@ -82,7 +93,11 @@ fn spawn_pipe_pair(commands: &mut Commands, assets: &GameAssets, window_height: 
             ..default()
         },
         Transform {
-            translation: Vec3::new(pipe_x, gap_y + PIPE_GAP / 2.0 + window_height / 2.0, 0.0),
+            translation: Vec3::new(
+                pipe_x,
+                gap_y + params.pipe_gap / 2.0 + window_height / 2.0,
+                0.0,
+            ),
             scale: Vec3::new(1.0, -1.0, 1.0), // Переворачиваем
             ..default()
         },
@@ -100,7 +115,11 @@ fn spawn_pipe_pair(commands: &mut Commands, assets: &GameAssets, window_height: 
             ..default()
         },
         Transform {
-            translation: Vec3::new(pipe_x, gap_y - PIPE_GAP / 2.0 - window_height / 2.0, 0.0),
+            translation: Vec3::new(
+                pipe_x,
+                gap_y - params.pipe_gap / 2.0 - window_height / 2.0,
+                0.0,
+            ),
             ..default()
         },
         Pipe,
@@ -117,6 +136,7 @@ fn spawn_pipes_continuously(
     windows: Query<&Window>,
     time: Res<Time>,
     mut spawner: ResMut<PipeSpawner>,
+    difficulty: Res<DifficultySettings>,
 ) {
     spawner.timer.tick(time.delta());
 
@@ -124,9 +144,22 @@ fn spawn_pipes_continuously(
         let window = windows.single();
         let window_height = window.height();
 
-        let new_pipe_x = spawner.last_pipe_x + PIPE_DISTANCE;
-        spawn_pipe_pair(&mut commands, &assets, window_height, new_pipe_x);
+        let new_pipe_x = spawner.last_pipe_x + difficulty.current_params.pipe_distance;
+        spawn_pipe_pair(
+            &mut commands,
+            &assets,
+            window_height,
+            new_pipe_x,
+            &difficulty.current_params,
+        );
         spawner.last_pipe_x = new_pipe_x;
+
+        // Обновляем таймер спавна согласно сложности
+        spawner
+            .timer
+            .set_duration(std::time::Duration::from_secs_f32(
+                difficulty.current_params.spawn_interval.max(0.0),
+            ));
     }
 }
 
@@ -141,9 +174,13 @@ fn cleanup_offscreen_pipes(
     }
 }
 
-fn move_pipes(mut query: Query<&mut Transform, With<Pipe>>, time: Res<Time>) {
+fn move_pipes(
+    mut query: Query<&mut Transform, With<Pipe>>,
+    time: Res<Time>,
+    difficulty: Res<DifficultySettings>,
+) {
     for mut transform in &mut query {
-        transform.translation.x -= 100.0 * time.delta_secs();
+        transform.translation.x -= difficulty.current_params.pipe_speed * time.delta_secs();
     }
 }
 

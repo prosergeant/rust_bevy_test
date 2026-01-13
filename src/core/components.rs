@@ -22,3 +22,6 @@ pub struct RestartButton;
 
 #[derive(Component)]
 pub struct MainMenuButton;
+
+#[derive(Component)]
+pub struct SettingsButton;

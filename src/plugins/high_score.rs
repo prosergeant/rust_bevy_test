@@ -1,4 +1,7 @@
-use crate::core::resources::{GameAssets, GameScore, HighScoreEntry, HighScores};
+use crate::core::{
+    difficulty_types::DifficultySettings,
+    resources::{GameAssets, GameScore, HighScoreEntry, HighScores},
+};
 use crate::states::game_state::{GameOverSet, GameState};
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
@@ -71,9 +74,13 @@ pub fn save_high_scores(high_scores: Res<HighScores>) {
 pub fn update_high_scores_and_save(
     mut high_scores: ResMut<HighScores>,
     game_score: Res<GameScore>,
+    difficulty: Res<DifficultySettings>,
 ) {
     if game_score.0 > 0 {
-        let new_entry = HighScoreEntry::new(game_score.0, "Normal".to_string());
+        let new_entry = HighScoreEntry::new(
+            game_score.0,
+            difficulty.current_level.russian_name().to_string(),
+        );
 
         // Добавляем новый рекорд
         high_scores.scores.push(new_entry);
@@ -87,7 +94,11 @@ pub fn update_high_scores_and_save(
             high_scores.scores.truncate(max_entries);
         }
 
-        println!("Обновлены рекорды. Текущий счёт: {}", game_score.0);
+        println!(
+            "Обновлены рекорды. Текущий счёт: {} ({})",
+            game_score.0,
+            difficulty.current_level.russian_name()
+        );
     }
 }
 
@@ -162,11 +173,12 @@ pub fn spawn_game_over_high_scores(
 
                     parent.spawn((
                         Text::new(format!(
-                            "{} {}. {} - {} очков",
+                            "{} {}. {} - {} очков ({})",
                             medal,
                             index + 1,
                             entry.date.split(' ').next().unwrap_or(&entry.date),
-                            entry.score
+                            entry.score,
+                            entry.difficulty
                         )),
                         TextFont {
                             font: assets.font.clone(),
@@ -205,9 +217,9 @@ mod tests {
 
     #[test]
     fn test_high_score_entry_creation() {
-        let entry = HighScoreEntry::new(100, "Normal".to_string());
+        let entry = HighScoreEntry::new(100, "Нормально".to_string());
         assert_eq!(entry.score, 100);
-        assert_eq!(entry.difficulty, "Normal");
+        assert_eq!(entry.difficulty, "Нормально");
         assert!(!entry.date.is_empty());
     }
 
@@ -216,18 +228,19 @@ mod tests {
         let mut high_scores = HighScores::default();
         high_scores
             .scores
-            .push(HighScoreEntry::new(50, "Normal".to_string()));
+            .push(HighScoreEntry::new(50, "Легко".to_string()));
         high_scores
             .scores
-            .push(HighScoreEntry::new(100, "Normal".to_string()));
+            .push(HighScoreEntry::new(100, "Сложно".to_string()));
         high_scores
             .scores
-            .push(HighScoreEntry::new(75, "Normal".to_string()));
+            .push(HighScoreEntry::new(75, "Нормально".to_string()));
 
         high_scores.scores.sort_by(|a, b| b.score.cmp(&a.score));
 
         assert_eq!(high_scores.scores[0].score, 100);
         assert_eq!(high_scores.scores[1].score, 75);
         assert_eq!(high_scores.scores[2].score, 50);
+        assert_eq!(high_scores.scores[0].difficulty, "Сложно");
     }
 }

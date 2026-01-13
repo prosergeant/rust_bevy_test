@@ -1,9 +1,12 @@
 pub mod components;
+pub mod difficulty_types;
 pub mod resources;
 pub mod systems;
 pub mod utils;
 
-use self::components::{ExitButton, MainMenuButton, MenuButton, RestartButton, StartButton};
+use self::components::{
+    ExitButton, MainMenuButton, MenuButton, RestartButton, SettingsButton, StartButton,
+};
 use self::resources::{GameAssets, GameOverUIState, GameScore, HighScores};
 use self::systems::{
     handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
@@ -14,8 +17,11 @@ use crate::plugins::{
     audio::AudioPlugin,
     background::BackgroundPlugin,
     bird::BirdPlugin,
+    difficulty::DifficultyPlugin,
     high_score::{spawn_game_over_high_scores, HighScorePlugin},
     pipes::PipesPlugin,
+    progressive_difficulty::ProgressiveDifficultyPlugin,
+    settings_ui::SettingsUIPlugin,
 };
 use crate::states::app_state::AppState;
 use crate::states::game_state::{GameOverSet, GameState};
@@ -47,6 +53,9 @@ impl Plugin for GamePlugin {
                 BackgroundPlugin,
                 BirdPlugin,
                 PipesPlugin,
+                DifficultyPlugin,
+                ProgressiveDifficultyPlugin,
+                SettingsUIPlugin,
                 HighScorePlugin,
             ))
             .add_systems(Startup, (setup, spawn_state_ui))
@@ -224,6 +233,35 @@ fn spawn_main_menu(mut commands: Commands, asset: Res<GameAssets>) {
                 .with_children(|parent| {
                     parent.spawn((
                         Text::new("Начать"),
+                        TextFont {
+                            font: asset.font.clone(),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(50.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        overflow: Overflow::clip(),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(8.0)),
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
+                    MenuButton,
+                    SettingsButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Настройки"),
                         TextFont {
                             font: asset.font.clone(),
                             font_size: 24.0,

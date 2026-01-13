@@ -2,5 +2,8 @@ pub mod asset_loader;
 pub mod audio;
 pub mod background;
 pub mod bird;
+pub mod difficulty;
 pub mod high_score;
 pub mod pipes;
+pub mod progressive_difficulty;
+pub mod settings_ui;

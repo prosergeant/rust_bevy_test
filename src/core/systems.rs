@@ -1,4 +1,6 @@
-use crate::core::components::{ExitButton, MainMenuButton, MenuButton, RestartButton, StartButton};
+use crate::core::components::{
+    ExitButton, MainMenuButton, MenuButton, RestartButton, SettingsButton, StartButton,
+};
 use crate::states::game_state::GameState;
 use bevy::prelude::*;
 
@@ -22,6 +24,7 @@ pub fn transition_to_game_state(
             GameState::MainMenu => {
                 exit.send(AppExit::Success);
             }
+            GameState::Settings => next_state.set(GameState::MainMenu),
             _ => {}
         }
     }
@@ -29,6 +32,7 @@ pub fn transition_to_game_state(
 
 pub fn handle_menu_button_clicks(
     start_button_query: Query<&Interaction, (Changed<Interaction>, With<StartButton>)>,
+    settings_button_query: Query<&Interaction, (Changed<Interaction>, With<SettingsButton>)>,
     exit_button_query: Query<&Interaction, (Changed<Interaction>, With<ExitButton>)>,
     restart_button_query: Query<&Interaction, (Changed<Interaction>, With<RestartButton>)>,
     main_menu_button_query: Query<&Interaction, (Changed<Interaction>, With<MainMenuButton>)>,
@@ -39,6 +43,12 @@ pub fn handle_menu_button_clicks(
     for interaction in &start_button_query {
         if *interaction == Interaction::Pressed && current_state.get() == &GameState::MainMenu {
             next_state.set(GameState::PreGame);
+        }
+    }
+
+    for interaction in &settings_button_query {
+        if *interaction == Interaction::Pressed && current_state.get() == &GameState::MainMenu {
+            next_state.set(GameState::Settings);
         }
     }
 
