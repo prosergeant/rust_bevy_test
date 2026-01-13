@@ -51,7 +51,7 @@ impl Plugin for PipesPlugin {
                 )
                     .run_if(in_state(GameState::Playing)),
             )
-            .add_systems(OnExit(GameState::GameOver), despawn_pipes);
+            .add_systems(OnExit(GameState::GameOver), despawn_entities::<Pipe>);
     }
 }
 
@@ -190,15 +190,12 @@ fn score_system(
             if transform.translation.x < bird_transform.translation.x - 50.0 {
                 score.0 += 1;
                 commands.entity(entity).remove::<Scrollable>();
-                // Отправляем событие получения очка
                 score_events.send(ScoreEvent);
+
+                return; // Выходим чтобы избежать множественной обработки в одном кадре
             }
         }
     }
-}
-
-fn despawn_pipes(commands: Commands, query: Query<Entity, With<Pipe>>) {
-    despawn_entities::<Pipe>(commands, query);
 }
 
 fn collide(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) -> bool {

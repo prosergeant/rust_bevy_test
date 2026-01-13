@@ -1,6 +1,11 @@
 use crate::core::resources::GameAssets;
+use crate::core::utils::despawn_entities;
 use crate::states::app_state::AppState;
 use bevy::prelude::*;
+
+/// Маркер для аудио сущностей
+#[derive(Component)]
+pub struct AudioEntity;
 
 /// Плагин для управления звуковыми эффектами
 pub struct AudioPlugin;
@@ -20,6 +25,14 @@ impl Plugin for AudioPlugin {
                     play_game_over_sounds,
                 )
                     .run_if(in_state(AppState::Loaded)),
+            )
+            .add_systems(
+                OnExit(crate::states::game_state::GameState::GameOver),
+                despawn_entities::<AudioEntity>,
+            )
+            .add_systems(
+                OnEnter(crate::states::game_state::GameState::PreGame),
+                despawn_entities::<AudioEntity>,
             );
     }
 }
@@ -46,7 +59,8 @@ pub fn play_jump_sounds(
     for _event in jump_events.read() {
         commands.spawn((
             AudioPlayer::new(assets.jump_sound.clone()),
-            PlaybackSettings::ONCE,
+            PlaybackSettings::DESPAWN,
+            AudioEntity,
         ));
     }
 }
@@ -60,7 +74,8 @@ pub fn play_score_sounds(
     for _event in score_events.read() {
         commands.spawn((
             AudioPlayer::new(assets.score_sound.clone()),
-            PlaybackSettings::ONCE,
+            PlaybackSettings::DESPAWN,
+            AudioEntity,
         ));
     }
 }
@@ -74,7 +89,8 @@ pub fn play_collision_sounds(
     for _event in collision_events.read() {
         commands.spawn((
             AudioPlayer::new(assets.hit_sound.clone()),
-            PlaybackSettings::ONCE,
+            PlaybackSettings::DESPAWN,
+            AudioEntity,
         ));
     }
 }
@@ -88,7 +104,8 @@ pub fn play_game_over_sounds(
     for _event in game_over_events.read() {
         commands.spawn((
             AudioPlayer::new(assets.game_over_sound.clone()),
-            PlaybackSettings::ONCE,
+            PlaybackSettings::DESPAWN,
+            AudioEntity,
         ));
     }
 }
