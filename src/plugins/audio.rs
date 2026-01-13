@@ -109,20 +109,3 @@ pub fn play_game_over_sounds(
         ));
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_audio_events_creation() {
-        // Базовый тест для проверки создания событий
-        let jump_event = JumpEvent;
-        let score_event = ScoreEvent;
-        let collision_event = CollisionEvent;
-        let game_over_event = GameOverEvent;
-
-        // Просто проверяем, что события создаются без паники
-        assert!(true); // Placeholder тест
-    }
-}

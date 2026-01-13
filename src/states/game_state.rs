@@ -16,3 +16,9 @@ pub enum GameOverSet {
     UpdateScores,
     SpawnUi,
 }
+
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum EffectsSet {
+    SpawnCam,
+    UpdateCam,
+}

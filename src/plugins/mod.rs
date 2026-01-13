@@ -3,6 +3,7 @@ pub mod audio;
 pub mod background;
 pub mod bird;
 pub mod difficulty;
+pub mod effects;
 pub mod high_score;
 pub mod pipes;
 pub mod progressive_difficulty;

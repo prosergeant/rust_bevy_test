@@ -18,13 +18,14 @@ use crate::plugins::{
     background::BackgroundPlugin,
     bird::BirdPlugin,
     difficulty::DifficultyPlugin,
+    effects::EffectsPlugin,
     high_score::{spawn_game_over_high_scores, HighScorePlugin},
     pipes::PipesPlugin,
     progressive_difficulty::ProgressiveDifficultyPlugin,
     settings_ui::SettingsUIPlugin,
 };
 use crate::states::app_state::AppState;
-use crate::states::game_state::{GameOverSet, GameState};
+use crate::states::game_state::{EffectsSet, GameOverSet, GameState};
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
 use bevy::ui::{
@@ -56,9 +57,13 @@ impl Plugin for GamePlugin {
                 DifficultyPlugin,
                 ProgressiveDifficultyPlugin,
                 SettingsUIPlugin,
+                EffectsPlugin,
                 HighScorePlugin,
             ))
-            .add_systems(Startup, (setup, spawn_state_ui))
+            .add_systems(
+                Startup,
+                (setup.in_set(EffectsSet::SpawnCam), spawn_state_ui),
+            )
             .add_systems(OnEnter(AppState::Loaded), init_game_state)
             .add_systems(OnEnter(GameState::PreGame), reset_score)
             .add_systems(
