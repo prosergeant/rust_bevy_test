@@ -37,67 +37,60 @@ pub struct CollisionEvent;
 #[derive(Event)]
 pub struct GameOverEvent;
 
-/// Настройка аудио системы
-#[allow(dead_code)]
-pub fn setup_audio() {
-    println!("🔊 Аудио система инициализирована (заглушка)");
-    // TODO: Добавить реальную аудио систему когда будем добавлять звуки
-}
-
 /// Воспроизведение звука прыжка
-pub fn play_jump_sounds(mut jump_events: EventReader<JumpEvent>, _assets: Res<GameAssets>) {
+pub fn play_jump_sounds(
+    mut commands: Commands,
+    mut jump_events: EventReader<JumpEvent>,
+    assets: Res<GameAssets>,
+) {
     for _event in jump_events.read() {
-        // TODO: Добавить реальное воспроизведение звука
-        // bevy_audio пока не поддерживается в этом проекте, но структура готова
+        commands.spawn((
+            AudioPlayer::new(assets.jump_sound.clone()),
+            PlaybackSettings::ONCE,
+        ));
     }
 }
 
 /// Воспроизведение звука получения очков
-pub fn play_score_sounds(mut score_events: EventReader<ScoreEvent>, _assets: Res<GameAssets>) {
+pub fn play_score_sounds(
+    mut commands: Commands,
+    mut score_events: EventReader<ScoreEvent>,
+    assets: Res<GameAssets>,
+) {
     for _event in score_events.read() {
-        println!("🔊 Воспроизводится звук получения очка (пока заглушка)");
+        commands.spawn((
+            AudioPlayer::new(assets.score_sound.clone()),
+            PlaybackSettings::ONCE,
+        ));
     }
 }
 
 /// Воспроизведение звука столкновения
 pub fn play_collision_sounds(
+    mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    _assets: Res<GameAssets>,
+    assets: Res<GameAssets>,
 ) {
     for _event in collision_events.read() {
-        println!("🔊 Воспроизводится звук столкновения (пока заглушка)");
+        commands.spawn((
+            AudioPlayer::new(assets.hit_sound.clone()),
+            PlaybackSettings::ONCE,
+        ));
     }
 }
 
 /// Воспроизведение звука окончания игры
 pub fn play_game_over_sounds(
+    mut commands: Commands,
     mut game_over_events: EventReader<GameOverEvent>,
-    _assets: Res<GameAssets>,
+    assets: Res<GameAssets>,
 ) {
     for _event in game_over_events.read() {
-        println!("🔊 Воспроизводится звук окончания игры (пока заглушка)");
+        commands.spawn((
+            AudioPlayer::new(assets.game_over_sound.clone()),
+            PlaybackSettings::ONCE,
+        ));
     }
-}
-
-/// Вспомогательные функции для отправки событий
-#[allow(dead_code)]
-pub fn send_jump_event(mut writer: EventWriter<JumpEvent>) {
-    writer.send(JumpEvent);
-}
-
-#[allow(dead_code)]
-pub fn send_score_event(mut writer: EventWriter<ScoreEvent>) {
-    writer.send(ScoreEvent);
-}
-
-#[allow(dead_code)]
-pub fn send_collision_event(mut writer: EventWriter<CollisionEvent>) {
-    writer.send(CollisionEvent);
-}
-
-#[allow(dead_code)]
-pub fn send_game_over_event(mut writer: EventWriter<GameOverEvent>) {
-    writer.send(GameOverEvent);
 }
 
 #[cfg(test)]

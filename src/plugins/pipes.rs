@@ -4,6 +4,7 @@ use crate::{
         resources::*,
         utils::despawn_entities,
     },
+    plugins::audio::{CollisionEvent, GameOverEvent, ScoreEvent},
     plugins::bird::Bird,
     states::game_state::GameState,
 };
@@ -151,8 +152,8 @@ fn check_collisions(
     pipe_query: Query<&Transform, With<Pipe>>,
     collider_query: Query<&Collider>,
     mut next_state: ResMut<NextState<GameState>>,
-    mut collision_events: EventWriter<super::audio::CollisionEvent>,
-    mut game_over_events: EventWriter<super::audio::GameOverEvent>,
+    mut collision_events: EventWriter<CollisionEvent>,
+    mut game_over_events: EventWriter<GameOverEvent>,
 ) {
     if let Ok(bird_transform) = bird_query.get_single() {
         let bird_collider = Collider {
@@ -167,8 +168,8 @@ fn check_collisions(
                 pipe_collider.size,
             ) {
                 // Отправляем звуковые события
-                collision_events.send(super::audio::CollisionEvent);
-                game_over_events.send(super::audio::GameOverEvent);
+                collision_events.send(CollisionEvent);
+                game_over_events.send(GameOverEvent);
 
                 next_state.set(GameState::GameOver);
                 return;
@@ -182,7 +183,7 @@ fn score_system(
     mut commands: Commands,
     query: Query<(Entity, &Transform), With<Scrollable>>,
     bird_query: Query<&Transform, With<Bird>>,
-    mut score_events: EventWriter<super::audio::ScoreEvent>,
+    mut score_events: EventWriter<ScoreEvent>,
 ) {
     if let Ok(bird_transform) = bird_query.get_single() {
         for (entity, transform) in &query {
@@ -190,7 +191,7 @@ fn score_system(
                 score.0 += 1;
                 commands.entity(entity).remove::<Scrollable>();
                 // Отправляем событие получения очка
-                score_events.send(super::audio::ScoreEvent);
+                score_events.send(ScoreEvent);
             }
         }
     }

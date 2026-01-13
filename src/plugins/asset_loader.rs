@@ -26,8 +26,8 @@ fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
         // Загрузка аудио ассетов
         jump_sound: asset_server.load("sounds/jump.wav"),
         score_sound: asset_server.load("sounds/score.wav"),
-        hit_sound: asset_server.load("sounds/hit.wav"),
-        game_over_sound: asset_server.load("sounds/game_over.wav"),
+        hit_sound: asset_server.load("sounds/hit.mp3"),
+        game_over_sound: asset_server.load("sounds/game_over.mp3"),
         // Загрузка фоновых слоев
         background_layers: vec![
             asset_server.load("backgrounds/bg_0.png"),    // горы
