@@ -1,4 +1,4 @@
-use crate::core::utils::despawn_entities;
+use crate::core::{resources::ActivePowerUps, utils::despawn_entities};
 use crate::plugins::audio::{CollisionEvent, ScoreEvent};
 use crate::states::{
     app_state::AppState,
@@ -125,10 +125,17 @@ fn spawn_score_floating_text(
     mut commands: Commands,
     mut score_events: EventReader<ScoreEvent>,
     assets: Res<crate::core::resources::GameAssets>,
+    active_effects: Res<ActivePowerUps>,
 ) {
+    let score_text = if active_effects.double_score_active {
+        "+2".to_string()
+    } else {
+        "+1".to_string()
+    };
+
     for _event in score_events.read() {
         commands.spawn((
-            Text2d::new("+1".to_string()),
+            Text2d::new(&score_text),
             TextFont {
                 font: assets.font.clone(),
                 font_size: 40.0,

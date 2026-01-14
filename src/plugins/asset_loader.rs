@@ -28,6 +28,8 @@ fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
         score_sound: asset_server.load("sounds/score.wav"),
         hit_sound: asset_server.load("sounds/hit.mp3"),
         game_over_sound: asset_server.load("sounds/game_over.mp3"),
+        powerup_collect_sound: asset_server.load("sounds/powerup_collect.wav"),
+        powerup_spawn_sound: asset_server.load("sounds/powerup_spawn.wav"),
         // Загрузка фоновых слоев
         background_layers: vec![
             asset_server.load("backgrounds/bg_0.png"),    // горы
@@ -62,6 +64,12 @@ fn check_assets_loaded(
     let game_over_sound_loaded = asset_server
         .load_state(game_assets.game_over_sound.id())
         .is_loaded();
+    let powerup_collect_sound_loaded = asset_server
+        .load_state(game_assets.powerup_collect_sound.id())
+        .is_loaded();
+    let powerup_spawn_sound_loaded = asset_server
+        .load_state(game_assets.powerup_spawn_sound.id())
+        .is_loaded();
     let background_layers_loaded = game_assets
         .background_layers
         .iter()
@@ -74,6 +82,8 @@ fn check_assets_loaded(
         && score_sound_loaded
         && hit_sound_loaded
         && game_over_sound_loaded
+        && powerup_collect_sound_loaded
+        && powerup_spawn_sound_loaded
         && background_layers_loaded
     {
         next_state.set(AppState::Loaded);

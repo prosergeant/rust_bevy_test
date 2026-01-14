@@ -16,6 +16,8 @@ impl Plugin for AudioPlugin {
             .add_event::<ScoreEvent>()
             .add_event::<CollisionEvent>()
             .add_event::<GameOverEvent>()
+            .add_event::<PowerUpCollectEvent>()
+            .add_event::<PowerUpSpawnSoundEvent>()
             .add_systems(
                 Update,
                 (
@@ -23,6 +25,8 @@ impl Plugin for AudioPlugin {
                     play_score_sounds,
                     play_collision_sounds,
                     play_game_over_sounds,
+                    play_powerup_collect_sounds,
+                    play_powerup_spawn_sounds,
                 )
                     .run_if(in_state(AppState::Loaded)),
             )
@@ -49,6 +53,12 @@ pub struct CollisionEvent;
 
 #[derive(Event)]
 pub struct GameOverEvent;
+
+#[derive(Event)]
+pub struct PowerUpCollectEvent;
+
+#[derive(Event)]
+pub struct PowerUpSpawnSoundEvent;
 
 /// Воспроизведение звука прыжка
 pub fn play_jump_sounds(
@@ -104,6 +114,36 @@ pub fn play_game_over_sounds(
     for _event in game_over_events.read() {
         commands.spawn((
             AudioPlayer::new(assets.game_over_sound.clone()),
+            PlaybackSettings::DESPAWN,
+            AudioEntity,
+        ));
+    }
+}
+
+/// Воспроизведение звука сбора Power-up
+pub fn play_powerup_collect_sounds(
+    mut commands: Commands,
+    mut collect_events: EventReader<PowerUpCollectEvent>,
+    assets: Res<GameAssets>,
+) {
+    for _event in collect_events.read() {
+        commands.spawn((
+            AudioPlayer::new(assets.powerup_collect_sound.clone()),
+            PlaybackSettings::DESPAWN,
+            AudioEntity,
+        ));
+    }
+}
+
+/// Воспроизведение звука появления Power-up
+pub fn play_powerup_spawn_sounds(
+    mut commands: Commands,
+    mut spawn_events: EventReader<PowerUpSpawnSoundEvent>,
+    assets: Res<GameAssets>,
+) {
+    for _event in spawn_events.read() {
+        commands.spawn((
+            AudioPlayer::new(assets.powerup_spawn_sound.clone()),
             PlaybackSettings::DESPAWN,
             AudioEntity,
         ));

@@ -5,9 +5,12 @@ pub mod systems;
 pub mod utils;
 
 use self::components::{
-    ExitButton, MainMenuButton, MenuButton, RestartButton, SettingsButton, StartButton,
+    ExitButton, MainMenuButton, MenuButton, OnStatisticsScreen, RestartButton, SettingsButton,
+    StartButton, StatisticsButton,
 };
-use self::resources::{GameAssets, GameOverUIState, GameScore, HighScores};
+use self::resources::{
+    GameAssets, GameMode, GameModeSettings, GameOverUIState, GameScore, HighScores,
+};
 use self::systems::{
     handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
 };
@@ -19,10 +22,13 @@ use crate::plugins::{
     bird::BirdPlugin,
     difficulty::DifficultyPlugin,
     effects::EffectsPlugin,
+    game_modes::GameModesPlugin,
     high_score::{spawn_game_over_high_scores, HighScorePlugin},
     pipes::PipesPlugin,
+    powerups::PowerUpsPlugin,
     progressive_difficulty::ProgressiveDifficultyPlugin,
     settings_ui::SettingsUIPlugin,
+    statistics::StatisticsPlugin,
 };
 use crate::states::app_state::AppState;
 use crate::states::game_state::{EffectsSet, GameOverSet, GameState};
@@ -59,12 +65,18 @@ impl Plugin for GamePlugin {
                 SettingsUIPlugin,
                 EffectsPlugin,
                 HighScorePlugin,
+                PowerUpsPlugin,
+                GameModesPlugin,
+                StatisticsPlugin,
             ))
             .add_systems(
                 Startup,
                 (setup.in_set(EffectsSet::SpawnCam), spawn_state_ui),
             )
-            .add_systems(OnEnter(AppState::Loaded), init_game_state)
+            .add_systems(
+                OnEnter(AppState::Loaded),
+                (init_game_state, init_default_game_mode),
+            )
             .add_systems(OnEnter(GameState::PreGame), reset_score)
             .add_systems(
                 Update,
@@ -104,7 +116,11 @@ impl Plugin for GamePlugin {
             )
             .add_systems(
                 Update,
-                show_game_over_ui.run_if(in_state(GameState::GameOver)),
+                (
+                    show_game_over_ui.run_if(in_state(GameState::GameOver)),
+                    menu_button_hover_effect.run_if(in_state(GameState::Statistics)),
+                )
+                    .run_if(in_state(AppState::Loaded)),
             )
             .add_systems(
                 OnExit(GameState::GameOver),
@@ -112,12 +128,24 @@ impl Plugin for GamePlugin {
                     despawn_entities::<OnGameOverScreen>,
                     reset_game_over_ui_timer,
                 ),
+            )
+            .add_systems(
+                OnExit(GameState::Statistics),
+                despawn_entities::<OnStatisticsScreen>,
             );
     }
 }
 
 fn init_game_state(mut next_state: ResMut<NextState<GameState>>) {
     next_state.set(GameState::MainMenu);
+}
+
+fn init_default_game_mode(mut mode_settings: ResMut<GameModeSettings>) {
+    mode_settings.current_mode = GameMode::Classic;
+    mode_settings.time_limit = None;
+    mode_settings.target_score = None;
+    mode_settings.lives = None;
+    mode_settings.difficulty_multiplier = 1.0;
 }
 
 fn setup(mut commands: Commands) {
@@ -238,6 +266,64 @@ fn spawn_main_menu(mut commands: Commands, asset: Res<GameAssets>) {
                 .with_children(|parent| {
                     parent.spawn((
                         Text::new("Начать"),
+                        TextFont {
+                            font: asset.font.clone(),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(50.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        overflow: Overflow::clip(),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(8.0)),
+                    BackgroundColor(Color::srgb(0.2, 0.3, 0.4)),
+                    MenuButton,
+                    crate::core::components::GameModeSelectionButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Режимы"),
+                        TextFont {
+                            font: asset.font.clone(),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(50.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        overflow: Overflow::clip(),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(8.0)),
+                    BackgroundColor(Color::srgb(0.3, 0.2, 0.4)),
+                    MenuButton,
+                    StatisticsButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Статистика"),
                         TextFont {
                             font: asset.font.clone(),
                             font_size: 24.0,
