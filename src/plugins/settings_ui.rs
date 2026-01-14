@@ -155,7 +155,7 @@ fn spawn_difficulty_button(
 }
 
 /// Создает кнопку меню
-fn spawn_menu_button(
+pub fn spawn_menu_button(
     parent: &mut ChildBuilder,
     assets: &GameAssets,
     text: &str,

@@ -72,9 +72,9 @@ impl Plugin for GamePlugin {
                     transition_to_game_state,
                     pregame_to_playing.run_if(in_state(GameState::PreGame)),
                     handle_menu_button_clicks
-                        .run_if(in_state(GameState::MainMenu).or(in_state(GameState::GameOver))),
+                        .run_if(in_state(GameState::MainMenu).or(in_state(GameState::GameOver).or(in_state(GameState::Statistics)))),
                     menu_button_hover_effect
-                        .run_if(in_state(GameState::MainMenu).or(in_state(GameState::GameOver))),
+                        .run_if(in_state(GameState::MainMenu).or(in_state(GameState::GameOver).or(in_state(GameState::Statistics)))),
                 )
                     .run_if(in_state(AppState::Loaded)),
             )

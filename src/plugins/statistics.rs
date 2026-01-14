@@ -1,14 +1,15 @@
 use crate::core::{
     components::*,
     resources::{GameMode, GameScore},
+    utils::despawn_entities
 };
 use crate::plugins::audio::{JumpEvent, ScoreEvent};
 use crate::plugins::powerups::PowerUpCollectedEvent;
+use crate::plugins::settings_ui::spawn_menu_button;
 use crate::states::{app_state::AppState, game_state::GameState};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
 
 /// Плагин статистики
 pub struct StatisticsPlugin;
@@ -31,7 +32,10 @@ impl Plugin for StatisticsPlugin {
                 OnEnter(GameState::Statistics),
                 spawn_statistics_screen.run_if(in_state(AppState::Loaded)),
             )
-            .add_systems(OnExit(GameState::Statistics), despawn_statistics_screen)
+            .add_systems(
+                OnExit(GameState::Statistics),
+                despawn_entities::<OnStatisticsScreen>,
+            )
             .add_systems(OnExit(AppState::Loaded), save_statistics);
     }
 }
@@ -401,34 +405,8 @@ pub fn spawn_statistics_screen(
                         });
                 });
 
-            // Кнопка возврата
-            parent
-                .spawn((
-                    Button,
-                    Node {
-                        width: Val::Px(200.0),
-                        height: Val::Px(50.0),
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        margin: UiRect::top(Val::Px(30.0)),
-                        ..default()
-                    },
-                    BorderRadius::all(Val::Px(8.0)),
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
-                    MenuButton,
-                    MainMenuButton,
-                ))
-                .with_children(|parent| {
-                    parent.spawn((
-                        Text::new("Назад"),
-                        TextFont {
-                            font: assets.font.clone(),
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                });
+                
+            spawn_menu_button(parent, &assets, "🔙 Назад в меню", MenuButton);
         });
 }
 
@@ -513,13 +491,4 @@ pub fn load_statistics(mut commands: Commands) {
     }
 }
 
-/// Система очистки UI статистики
-pub fn despawn_statistics_screen(
-    mut commands: Commands,
-    query: Query<Entity, With<OnStatisticsScreen>>,
-) {
-    for entity in &query {
-        commands.entity(entity).despawn_recursive();
-    }
-}
 
