@@ -5,7 +5,7 @@
 
 use crate::core::resources::GameAssets;
 use crate::states::app_state::AppState;
-use crate::states::game_state::GameState;
+// use crate::states::game_state::GameState;
 use bevy::prelude::*;
 /// Компонент для слоя параллакс фона
 #[derive(Component)]
@@ -29,7 +29,7 @@ impl Plugin for BackgroundPlugin {
                 Update,
                 parallax_scroll.run_if(
                     in_state(AppState::Loaded)
-                        .and(in_state(GameState::Playing).or(in_state(GameState::MainMenu))),
+                        // .and(in_state(GameState::Playing).or(in_state(GameState::MainMenu))),
                 ),
             );
     }
