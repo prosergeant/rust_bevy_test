@@ -5,6 +5,7 @@ pub mod bird;
 pub mod difficulty;
 pub mod effects;
 pub mod game_modes;
+pub mod game_over;
 pub mod high_score;
 pub mod pipes;
 pub mod powerups;

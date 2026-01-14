@@ -44,6 +44,7 @@ pub fn handle_menu_button_clicks(
     exit_button_query: Query<&Interaction, (Changed<Interaction>, With<ExitButton>)>,
     restart_button_query: Query<&Interaction, (Changed<Interaction>, With<RestartButton>)>,
     main_menu_button_query: Query<&Interaction, (Changed<Interaction>, With<MainMenuButton>)>,
+    menu_button_query: Query<&Interaction, (Changed<Interaction>, With<MenuButton>)>,
     current_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
@@ -90,7 +91,7 @@ pub fn handle_menu_button_clicks(
         }
     }
 
-    for interaction in &main_menu_button_query {
+    for interaction in &menu_button_query {
         if *interaction == Interaction::Pressed && current_state.get() == &GameState::Statistics {
             next_state.set(GameState::MainMenu);
         }

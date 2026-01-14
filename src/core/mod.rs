@@ -5,46 +5,33 @@ pub mod systems;
 pub mod utils;
 
 use self::components::{
-    ExitButton, MainMenuButton, MenuButton, OnStatisticsScreen, RestartButton, SettingsButton,
-    StartButton, StatisticsButton,
+    ExitButton, MenuButton,  SettingsButton, StartButton, StatisticsButton,
 };
-use self::resources::{
-    GameAssets, GameMode, GameModeSettings, GameOverUIState, GameScore, HighScores,
-};
+use self::resources::{GameAssets, GameMode, GameModeSettings, GameOverUIState, GameScore};
 use self::systems::{
     handle_menu_button_clicks, menu_button_hover_effect, transition_to_game_state,
 };
 use self::utils::despawn_entities;
 use crate::plugins::{
-    asset_loader::AssetLoaderPlugin,
-    audio::AudioPlugin,
-    background::BackgroundPlugin,
-    bird::BirdPlugin,
-    difficulty::DifficultyPlugin,
-    effects::EffectsPlugin,
-    game_modes::GameModesPlugin,
-    high_score::{spawn_game_over_high_scores, HighScorePlugin},
-    pipes::PipesPlugin,
-    powerups::PowerUpsPlugin,
-    progressive_difficulty::ProgressiveDifficultyPlugin,
-    settings_ui::SettingsUIPlugin,
+    asset_loader::AssetLoaderPlugin, audio::AudioPlugin, background::BackgroundPlugin,
+    bird::BirdPlugin, difficulty::DifficultyPlugin, effects::EffectsPlugin,
+    game_modes::GameModesPlugin, game_over::GameOverPlugin, high_score::HighScorePlugin,
+    pipes::PipesPlugin, powerups::PowerUpsPlugin,
+    progressive_difficulty::ProgressiveDifficultyPlugin, settings_ui::SettingsUIPlugin,
     statistics::StatisticsPlugin,
 };
 use crate::states::app_state::AppState;
-use crate::states::game_state::{EffectsSet, GameOverSet, GameState};
+use crate::states::game_state::{EffectsSet, GameState};
 use bevy::prelude::*;
 use bevy::text::{TextColor, TextFont};
 use bevy::ui::{
-    AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, Node, Overflow, Val,
+    AlignItems, BorderRadius,  FlexDirection, JustifyContent, Node, Overflow, Val,
 };
 
 pub struct GamePlugin;
 
 #[derive(Component)]
 pub struct OnMainMenuScreen;
-
-#[derive(Component)]
-pub struct OnGameOverScreen;
 
 #[derive(Component)]
 pub struct StateDisplayText;
@@ -68,6 +55,7 @@ impl Plugin for GamePlugin {
                 PowerUpsPlugin,
                 GameModesPlugin,
                 StatisticsPlugin,
+                GameOverPlugin,
             ))
             .add_systems(
                 Startup,
@@ -106,32 +94,6 @@ impl Plugin for GamePlugin {
             .add_systems(
                 OnExit(GameState::MainMenu),
                 despawn_entities::<OnMainMenuScreen>,
-            )
-            .add_systems(
-                OnEnter(GameState::GameOver),
-                spawn_game_over_screen
-                    .in_set(GameOverSet::SpawnUi)
-                    .after(GameOverSet::UpdateScores)
-                    .run_if(in_state(AppState::Loaded)),
-            )
-            .add_systems(
-                Update,
-                (
-                    show_game_over_ui.run_if(in_state(GameState::GameOver)),
-                    menu_button_hover_effect.run_if(in_state(GameState::Statistics)),
-                )
-                    .run_if(in_state(AppState::Loaded)),
-            )
-            .add_systems(
-                OnExit(GameState::GameOver),
-                (
-                    despawn_entities::<OnGameOverScreen>,
-                    reset_game_over_ui_timer,
-                ),
-            )
-            .add_systems(
-                OnExit(GameState::Statistics),
-                despawn_entities::<OnStatisticsScreen>,
             );
     }
 }
@@ -183,31 +145,6 @@ fn spawn_state_ui(mut commands: Commands, asset: Res<GameAssets>) {
         });
 }
 
-/// Сбрасывает состояние Game Over UI при выходе из состояния
-fn reset_game_over_ui_timer(mut ui_state: ResMut<GameOverUIState>) {
-    ui_state.timer = 0.0;
-    ui_state.is_visible = false;
-}
-
-/// Показать Game Over UI после небольшой задержки
-fn show_game_over_ui(
-    time: Res<Time>,
-    mut game_over_ui_query: Query<&mut Node, With<OnGameOverScreen>>,
-    mut ui_state: ResMut<GameOverUIState>,
-) {
-    // Если UI уже отображён, не выполняем систему
-    if ui_state.is_visible {
-        return;
-    }
-
-    ui_state.timer += time.delta_secs();
-    if ui_state.timer >= 0.5 && ui_state.timer < 0.6 {
-        for mut node in &mut game_over_ui_query {
-            node.display = Display::Flex;
-            ui_state.is_visible = true;
-        }
-    }
-}
 fn update_state_display(
     mut query: Query<&mut Text, With<StateDisplayText>>,
     app_state: Res<State<AppState>>,
@@ -381,119 +318,6 @@ fn spawn_main_menu(mut commands: Commands, asset: Res<GameAssets>) {
                 .with_children(|parent| {
                     parent.spawn((
                         Text::new("Выход"),
-                        TextFont {
-                            font: asset.font.clone(),
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                });
-        });
-}
-
-fn spawn_game_over_screen(
-    mut commands: Commands,
-    score: Res<GameScore>,
-    high_scores: Res<HighScores>,
-    asset: Res<GameAssets>,
-    mut ui_state: ResMut<GameOverUIState>,
-) {
-    // Устанавливаем флаг состояния
-    ui_state.timer = 0.0;
-    ui_state.is_visible = false;
-
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                display: Display::None,
-                ..default()
-            },
-            OnGameOverScreen,
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                Text::new("Game Over"),
-                TextFont {
-                    font: asset.font.clone(),
-                    font_size: 80.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
-            // Отображаем текущий счёт
-            parent.spawn((
-                Text::new(format!("Счёт: {}", score.0)),
-                TextFont {
-                    font: asset.font.clone(),
-                    font_size: 40.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                Node {
-                    margin: UiRect::bottom(Val::Px(20.0)),
-                    ..default()
-                },
-            ));
-
-            spawn_game_over_high_scores(parent, &score, &high_scores, &asset);
-
-            // Кнопка перезапуска
-            parent
-                .spawn((
-                    Button,
-                    Node {
-                        width: Val::Px(200.0),
-                        height: Val::Px(50.0),
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        margin: UiRect::all(Val::Px(10.0)),
-                        overflow: Overflow::clip(),
-                        ..default()
-                    },
-                    BorderRadius::all(Val::Px(8.0)),
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
-                    MenuButton,
-                    RestartButton,
-                ))
-                .with_children(|parent| {
-                    parent.spawn((
-                        Text::new("Перезапустить"),
-                        TextFont {
-                            font: asset.font.clone(),
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                });
-
-            // Кнопка главного меню
-            parent
-                .spawn((
-                    Button,
-                    Node {
-                        width: Val::Px(200.0),
-                        height: Val::Px(50.0),
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        margin: UiRect::all(Val::Px(10.0)),
-                        overflow: Overflow::clip(),
-                        ..default()
-                    },
-                    BorderRadius::all(Val::Px(8.0)),
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
-                    MenuButton,
-                    MainMenuButton,
-                ))
-                .with_children(|parent| {
-                    parent.spawn((
-                        Text::new("Главное меню"),
                         TextFont {
                             font: asset.font.clone(),
                             font_size: 24.0,
